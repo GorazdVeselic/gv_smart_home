@@ -1,0 +1,13 @@
+{
+  "name": "GV Smart Home",
+  "content_in_root": false,
+  "render_readme": true,
+  "homeassistant": "2023.0.0",
+  "country": ["SI"],
+  "zip_release": false,
+  "filename": "",
+  "domains": ["gv_smart_home"],
+  "iot_class": "calculated",
+  "image": "https://raw.githubusercontent.com/GorazdVeselic/gv_smart_home/main/icons/logo.png",
+  "hide_default_branch": false
+}
