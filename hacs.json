@@ -1,0 +1,8 @@
+{
+  "name": "GV Smart Home",
+  "domains": ["gv_smart_home"],
+  "country": ["SI"],
+  "render_readme": true,
+  "iot_class": "Local Polling",
+  "homeassistant": "2025.0.0"
+}

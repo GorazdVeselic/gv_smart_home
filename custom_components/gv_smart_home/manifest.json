@@ -1,7 +1,7 @@
 {
   "domain": "gv_smart_home",
   "name": "GV Smart Home",
-  "version": "0.3.0",
+  "version": "0.1.0",
   "documentation": "https://github.com/GorazdVeselic/gv_smart_home",
   "requirements": [],
   "codeowners": [
@@ -12,13 +12,5 @@
   "loggers": [
     "custom_components.gv_smart_home"
   ],
-  "integration_type": "hub",
-  "frontend": {
-    "js_modules": [
-      {
-        "url": "frontend/gv-energy-tariff-card.js",
-        "type": "module"
-      }
-    ]
-  }
+  "integration_type": "hub"
 }
