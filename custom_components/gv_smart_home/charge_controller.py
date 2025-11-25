@@ -122,15 +122,11 @@ class HomeChargingController:
         # negative average grid power is import!
         available_power_w = max(int(effective_limit_w + avg_grid_power_w), 0)
 
-        wb_state = self.evaluate_wallbox_state()
-        mg_state = self.evaluate_mg4_state()
-
-        if not wb_state.available and not mg_state.available:
-            _LOGGER.info("controller: no chargers available → 0W")
-            await self.async_apply_charging_power(0)
-            return
 
         target_power_w = self.apply_ramp(available_power_w)
+
+        wb_state = self.evaluate_wallbox_state()
+        mg_state = self.evaluate_mg4_state()
 
         _LOGGER.info(
             "controller: block=%s eff_limit=%sW avg_grid=%.1fW avail=%sW target=%sW wb=%s mg=%s",
@@ -152,6 +148,11 @@ class HomeChargingController:
             next_block=next_block,
             minutes_to_next=minutes_to_next,
         )
+
+        if not wb_state.available and not mg_state.available:
+            _LOGGER.info("controller: no chargers available → 0W")
+            await self.async_apply_charging_power(0)
+            return
 
         await self.async_apply_charging_power(target_power_w)
 
