@@ -18,7 +18,46 @@
         "title": "Wallbox Setup",
         "description": "Select the entities related to your Wallbox charger.",
         "data": {
-          "wallbox_charging_active": "Wallbox charging enabled (switch)",
+          "wallbox_charging_power": "Wallbox charging power (W)",
+          "wallbox_set_current": "Wallbox charging current setpoint (A)",
+          "wallbox_cable_connected": "Wallbox cable connected",
+          "wallbox_status": "Wallbox status"
+        }
+      },
+      "mg4": {
+        "title": "MG4 Setup",
+        "description": "Select the entities related to your MG4 vehicle charging.",
+        "data": {
+          "mg4_charging_active": "MG4 charging active (binary sensor)",
+          "mg4_gun_state": "MG4 connector / gun state",
+          "mg4_set_current": "MG4 current limit (6/8/16/max)"
+        }
+      }
+    },
+    "error": {},
+    "abort": {
+      "single_instance_allowed": "Only one instance of GV Smart Home is allowed."
+    }
+  },
+  "options": {
+    "title": "GV Smart Home",
+    "step": {
+      "user": {
+        "title": "Block Power Configuration",
+        "description": "Enter contractual power limits for each block and select your house consumption sensor.",
+        "data": {
+          "block_1_power": "Agreed power for block 1 (kW)",
+          "block_2_power": "Agreed power for block 2 (kW)",
+          "block_3_power": "Agreed power for block 3 (kW)",
+          "block_4_power": "Agreed power for block 4 (kW)",
+          "block_5_power": "Agreed power for block 5 (kW)",
+          "house_consumption_entity": "House consumption sensor (solaredge power)"
+        }
+      },
+      "wallbox": {
+        "title": "Wallbox Setup",
+        "description": "Select the entities related to your Wallbox charger.",
+        "data": {
           "wallbox_charging_power": "Wallbox charging power (W)",
           "wallbox_set_current": "Wallbox charging current setpoint (A)",
           "wallbox_cable_connected": "Wallbox cable connected",

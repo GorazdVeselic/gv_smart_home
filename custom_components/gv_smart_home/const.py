@@ -24,7 +24,6 @@ CONF_BLOCK_5 = "block_5_power"
 
 CONF_GRID_POWER_ENTITY = "house_consumption_entity"
 
-CONF_WB_ACTIVE = "wallbox_charging_active"
 CONF_WB_POWER = "wallbox_charging_power"
 CONF_WB_SET_CURRENT = "wallbox_set_current"
 CONF_WB_CABLE = "wallbox_cable_connected"

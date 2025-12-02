@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+)
 
 from ..const import DOMAIN
 
@@ -14,10 +20,13 @@ SENSORS = [
     ("minutes_to_next", "GV Minutes To Next Block", "min", "mdi:timer-outline"),
 ]
 
-class GVChargingSensor(SensorEntity):
-    """Sensor representing a value from the controller (via coordinator)."""
+
+class GVChargingSensor(CoordinatorEntity, SensorEntity):
+    """Sensor that exposes values from the charging controller."""
 
     def __init__(self, coordinator, entry_id, key, name, unit, icon):
+        super().__init__(coordinator)
+        self._attr_should_poll = False
         self._coordinator = coordinator
         self._key = key
         self._attr_name = name
@@ -31,6 +40,7 @@ class GVChargingSensor(SensorEntity):
 
     @property
     def available(self):
+        # available if we've received at least one update for this key
         return self._key in self._coordinator.data
 
     @property
@@ -47,7 +57,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
 
-    entities = [
+    # Create one entity per sensor metric
+    sensors = [
         GVChargingSensor(
             coordinator,
             entry.entry_id,
@@ -59,4 +70,4 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
         for (key, name, unit, icon) in SENSORS
     ]
 
-    async_add_entities(entities)
+    async_add_entities(sensors)

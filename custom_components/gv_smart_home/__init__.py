@@ -12,7 +12,6 @@ from .charge_controller import HomeChargingController
 
 _LOGGER = logging.getLogger(__name__)
 
-# Register platforms
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
 ]
@@ -25,43 +24,57 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up GV Smart Home from a config entry."""
-
     _LOGGER.debug("Setting up GV Smart Home entry: %s", entry.entry_id)
 
-    # Ensure main domain dict exists
+    # Prepare domain storage
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN].setdefault(entry.entry_id, {})
     data = hass.data[DOMAIN][entry.entry_id]
 
-    # 1) Create coordinator
+    # ----------------------------------------------------------
+    # 1) Create coordinator (must receive entry!)
+    # ----------------------------------------------------------
     from .coordinator import GVChargingCoordinator
-    coordinator = GVChargingCoordinator(hass)
+    coordinator = GVChargingCoordinator(hass, entry)
     data["coordinator"] = coordinator
 
-    # 2) Start sampler (1s)
-    sampler = ConsumptionSampler(hass, entry)
+    # ----------------------------------------------------------
+    # 2) Create sampler (needs coordinator!)
+    # ----------------------------------------------------------
+    sampler = ConsumptionSampler(hass, entry, coordinator)
     await sampler.start()
     data["sampler"] = sampler
 
-    # 3) Start charging controller 1m
+    # ----------------------------------------------------------
+    # 3) Create charging controller (also needs coordinator!)
+    # ----------------------------------------------------------
     controller = HomeChargingController(
         hass=hass,
         sampler=sampler,
-        config_entry=entry,
+        entry=entry,
         coordinator=coordinator,
     )
     controller.start()
     data["controller"] = controller
 
-    # 4) Load entity platforms
+    # ----------------------------------------------------------
+    # 4) Setup sensor platform(s)
+    # ----------------------------------------------------------
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    _LOGGER.debug("GV Smart Home entry initialized successfully.")
+    # ----------------------------------------------------------
+    # 5) Setup live reload when options change
+    # ----------------------------------------------------------
+    entry.async_on_unload(
+        entry.add_update_listener(async_reload_entry)
+    )
 
+    _LOGGER.debug("GV Smart Home entry initialized successfully.")
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload GV Smart Home."""
     data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
 
     if data:
@@ -69,7 +82,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         controller = data.get("controller")
 
         if sampler:
-            sampler.stop()
+            await sampler.stop()
 
         if controller:
             controller.stop()
@@ -77,3 +90,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id, None)
 
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry):
+    """Reload when user changes configuration in UI."""
+    await hass.config_entries.async_reload(entry.entry_id)
