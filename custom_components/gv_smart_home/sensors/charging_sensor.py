@@ -1,14 +1,11 @@
+# custom_components/gv_smart_home/sensors/charging_sensor.py
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-)
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import DOMAIN
+
 
 SENSORS = [
     ("avg_grid_power_w", "GV Avg Grid Power", "W", "mdi:flash"),
@@ -22,25 +19,33 @@ SENSORS = [
 
 
 class GVChargingSensor(CoordinatorEntity, SensorEntity):
-    """Sensor that exposes values from the charging controller."""
+    """Sensor reflecting values pushed by charging controller through coordinator."""
 
-    def __init__(self, coordinator, entry_id, key, name, unit, icon):
+    def __init__(
+        self,
+        coordinator,
+        entry_id: str,
+        key: str,
+        name: str,
+        unit: str | None,
+        icon: str | None,
+    ) -> None:
         super().__init__(coordinator)
-        self._attr_should_poll = False
         self._coordinator = coordinator
+
         self._key = key
         self._attr_name = name
         self._attr_unique_id = f"{entry_id}_{key}"
         self._attr_native_unit_of_measurement = unit
         self._attr_icon = icon
+        self._attr_should_poll = False
 
     @property
     def native_value(self):
         return self._coordinator.data.get(self._key)
 
     @property
-    def available(self):
-        # available if we've received at least one update for this key
+    def available(self) -> bool:
         return self._key in self._coordinator.data
 
     @property
@@ -52,22 +57,11 @@ class GVChargingSensor(CoordinatorEntity, SensorEntity):
             "model": "EV Charging Logic",
         }
 
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities):
-    data = hass.data[DOMAIN][entry.entry_id]
-    coordinator = data["coordinator"]
-
-    # Create one entity per sensor metric
-    sensors = [
-        GVChargingSensor(
-            coordinator,
-            entry.entry_id,
-            key,
-            name,
-            unit,
-            icon,
-        )
-        for (key, name, unit, icon) in SENSORS
-    ]
-
-    async_add_entities(sensors)
+#@property
+#def device_info(self):
+#    return {
+#        "identifiers": {("gv_smart_home", "charging_logic")},
+#        "name": "GV Smart Charging Logic",
+#        "manufacturer": "Gogi",
+#        "model": "Charging Controller",
+#    }
