@@ -16,6 +16,22 @@ WINDOW_MINUTES = 15
 MIN_REMAINING_FOR_BUDGET = 1.0
 
 
+def allowed_import_kw(energy_kwmin: float, remaining_min: float, target_kw: float, agreed_kw: float) -> float:
+    """P_allow: dovoljen povprečni uvoz do konca okna, da povprečje okna ostane pod ciljem.
+
+    Omejen navzgor z dogovorjeno močjo. V zadnji minuti okna velja kar cilj.
+    """
+    if remaining_min < MIN_REMAINING_FOR_BUDGET:
+        return min(target_kw, agreed_kw)
+    allow_avg = (target_kw * WINDOW_MINUTES - energy_kwmin) / remaining_min
+    return min(allow_avg, agreed_kw)
+
+
+def projected_average_kw(energy_kwmin: float, remaining_min: float, p_import_rest_kw: float) -> float:
+    """Povprečje okna, če do konca okna uvoz ostane p_import_rest_kw."""
+    return (energy_kwmin + max(p_import_rest_kw, 0.0) * remaining_min) / WINDOW_MINUTES
+
+
 def window_start(now: datetime.datetime) -> datetime.datetime:
     return now.replace(minute=(now.minute // WINDOW_MINUTES) * WINDOW_MINUTES, second=0, microsecond=0)
 
@@ -107,17 +123,7 @@ class WindowBudget:
     # proračun
     # ------------------------------------------------------------------
     def allowed_import_kw(self, now: datetime.datetime, target_kw: float, agreed_kw: float) -> float:
-        """P_allow: dovoljen povprečni uvoz do konca okna, da povprečje okna ostane pod ciljem.
-
-        Omejen navzgor z dogovorjeno močjo. V zadnji minuti okna velja kar cilj.
-        """
-        rem = self.remaining(now)
-        if rem < MIN_REMAINING_FOR_BUDGET:
-            return min(target_kw, agreed_kw)
-        allow_avg = (target_kw * WINDOW_MINUTES - self._energy) / rem
-        return min(allow_avg, agreed_kw)
+        return allowed_import_kw(self._energy, self.remaining(now), target_kw, agreed_kw)
 
     def projected_average_kw(self, now: datetime.datetime, p_import_rest_kw: float) -> float:
-        """Povprečje okna, če do konca okna uvoz ostane p_import_rest_kw."""
-        rem = self.remaining(now)
-        return (self._energy + max(p_import_rest_kw, 0.0) * rem) / WINDOW_MINUTES
+        return projected_average_kw(self._energy, self.remaining(now), p_import_rest_kw)
