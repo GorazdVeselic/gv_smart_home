@@ -46,7 +46,12 @@ MIN_PAUSE = datetime.timedelta(minutes=10)
 
 # korak 7 in 8
 HIGH_STEP_UP_A = 2
+HIGH_DEADBAND_A = 1.0
 LOW_HOLD = datetime.timedelta(minutes=10)
+
+# avto dosegel cilj SOC (spec 6.6): status čakanja ali P_ev pod pragom več kot 5 min
+WAITING_TICKS = 10
+NO_POWER_KW = 0.1
 
 # vstop iz idle: P_ev v tem pasu okrog moči stopnje šteje kot potrditev (spec 6.5)
 CONFIRM_BAND_KW = 0.4
@@ -96,6 +101,12 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
         state = _enter_from_idle(inp, levels)
     cur = level_by_name(levels, state.level)
 
+    # avto dosegel cilj: brez moči več kot 5 min, kadar pavza ni naša
+    waiting = cur.tier != TIER_PAUSED and (ch.status == STATUS_WAITING_CAR or ch.p_ev_kw < NO_POWER_KW)
+    state = dataclasses.replace(state, ticks_waiting=state.ticks_waiting + 1 if waiting else 0)
+    if state.ticks_waiting >= WAITING_TICKS:
+        return out(None, TIER_IDLE, "idle_car_waiting", RegulatorState())
+
     # števci histereze
     state = dataclasses.replace(
         state,
@@ -128,7 +139,12 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
             wb_floor = highest_in_tier(levels, TIER_HIGH, 0.0)
             reason = "lower_pending" if state.ticks_below_lower else "high_floor"
             return out(wb_floor, TIER_HIGH, reason, _switched(state, wb_floor, inp.now))
-        target_a = min(cand.wb_current, cur.wb_current + HIGH_STEP_UP_A)
+        # korak 7: zvezni kandidatni tok, sprememba samo pri razliki 1 A ali več
+        highs = [lv for lv in levels if lv.tier == TIER_HIGH]
+        i_cand = min(max(p_ev_allow / kw_per_amp, highs[0].wb_current), highs[-1].wb_current)
+        if abs(i_cand - cur.wb_current) < HIGH_DEADBAND_A:
+            return out(cur, TIER_HIGH, "steady", state)
+        target_a = min(int(i_cand), cur.wb_current + HIGH_STEP_UP_A)
         new = level_by_name(levels, _wb_level_name(levels, target_a))
         if new == cur:
             return out(cur, TIER_HIGH, "steady", state)
@@ -158,11 +174,7 @@ def _idle_reason(inp: Inputs, state: RegulatorState) -> str | None:
         return "idle_mode_off"
     if not inp.charger.cable_connected:
         return "idle_no_cable"
-    if state.level == LEVEL_OFF:
-        return None  # med lastno pavzo sta Paused in Connected waiting car pričakovana
-    if inp.charger.status == STATUS_WAITING_CAR:
-        return "idle_car_waiting"
-    if inp.charger.status == STATUS_PAUSED:
+    if state.level != LEVEL_OFF and inp.charger.status == STATUS_PAUSED:
         return "idle_paused_externally"
     return None
 

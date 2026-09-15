@@ -13,6 +13,7 @@ from core.decide import (
     LOWER_TICKS,
     RAISE_TICKS,
     RESUME_TICKS,
+    WAITING_TICKS,
     decide,
     note_hard_threshold,
 )
@@ -100,6 +101,17 @@ def test_A_night_block4_heat_pump_then_off():
     d2 = decide(inputs(now=T0 + TICK, p_other=0.3, p_ev=6.2, wb_current=9), d.state, LEVELS)
     assert d2.p_ev_allow_kw == pytest.approx(7.7)
     assert d2.level == "wb_11A"
+
+
+def test_high_deadband_ignores_changes_under_one_amp():
+    # wb_11A: 7,5 kW da 10,87 A, razlika 0,13 A -> brez spremembe; 7,0 kW da 10,14 A, še vedno pod 1 A
+    d = decide(inputs(p_other=0.5, p_ev=7.6, wb_current=11), state_at("wb_11A"), LEVELS)
+    assert d.level == "wb_11A" and d.reason == "steady"
+    d = decide(inputs(p_other=1.0, p_ev=7.6, wb_current=11), state_at("wb_11A"), LEVELS)
+    assert d.level == "wb_11A" and d.reason == "steady"
+    # 6,8 kW da 9,86 A, razlika 1,14 A -> wb_9A (navzdol brez omejitve)
+    d = decide(inputs(p_other=1.2, p_ev=7.6, wb_current=11), state_at("wb_11A"), LEVELS)
+    assert d.level == "wb_9A"
 
 
 def test_high_ramps_up_two_amps_per_tick():
@@ -328,12 +340,30 @@ def test_no_cable_is_idle():
     assert d.state.level is None
 
 
-def test_car_waiting_is_idle_unless_pause_is_ours():
-    d = decide(inputs(status=STATUS_WAITING_CAR, p_ev=0.0), state_at("wb_9A"), LEVELS)
+def test_car_waiting_is_idle_after_five_minutes_unless_pause_is_ours():
+    # med vrnitvijo iz pavze in ob priklopu avto začne šele po 20 do 40 s
+    waiting = inputs(status=STATUS_WAITING_CAR, p_ev=0.0, wb_current=8, car_limit="8A")
+    d = run_ticks(waiting, state_at("car_8A"), WAITING_TICKS - 1)
+    assert d.tier == TIER_LOW and d.level == "car_8A"
+    d = decide(waiting.at(T0 + (WAITING_TICKS - 1) * TICK), d.state, LEVELS)
     assert d.tier == TIER_IDLE and d.reason == "idle_car_waiting"
+    assert d.state == RegulatorState()
+
+    # brez moči ob statusu Charging (avto poln) šteje enako
+    d = run_ticks(inputs(p_ev=0.0, wb_current=8, car_limit="8A"), state_at("car_8A"), WAITING_TICKS)
+    assert d.tier == TIER_IDLE
+
+    # med lastno pavzo je čakanje pričakovano
     paused = state_at("off", age_min=2.0)
-    d = decide(inputs(tariff=BLOCK1, status=STATUS_WAITING_CAR, p_ev=0.0, p_other=1.0), paused, LEVELS)
+    d = run_ticks(inputs(tariff=BLOCK1, status=STATUS_WAITING_CAR, p_ev=0.0, p_other=1.0), paused, WAITING_TICKS + 2)
     assert d.tier == TIER_PAUSED and d.reason == "pause_min_duration"
+
+
+def test_waiting_counter_resets_when_power_returns():
+    waiting = inputs(status=STATUS_WAITING_CAR, p_ev=0.0, wb_current=8, car_limit="8A")
+    d = run_ticks(waiting, state_at("car_8A"), WAITING_TICKS - 1)
+    d = decide(inputs(p_ev=2.0, wb_current=8, car_limit="8A"), d.state, LEVELS)
+    assert d.state.ticks_waiting == 0 and d.tier == TIER_LOW
 
 
 def test_external_pause_is_idle():

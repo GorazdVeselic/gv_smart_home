@@ -42,14 +42,24 @@ def test_negative_import_is_clamped_to_zero():
 
 def test_rollover_closes_window_and_starts_new():
     w = WindowBudget(at(0))
-    w.add_sample(at(0), 6.0)
-    w.add_sample(at(14), 6.0)
+    w.add_sample(at(0), 6.0, agreed_kw=5.4)
+    w.add_sample(at(14), 6.0, agreed_kw=5.4)
     w.add_sample(at(16), 2.0, agreed_kw=5.4)  # čez mejo 22:15
     assert w.last_window is not None
     assert w.last_window.average_kw == pytest.approx(6.0)
     assert w.last_window.exceeded is True
     assert w.start == at(15)
     assert w.energy_kwmin == pytest.approx(6.0 * 1)  # 6 kW je veljalo od 22:15 do 22:16
+
+
+def test_window_closes_with_agreed_power_of_its_own_block():
+    # 22:45 do 23:00 je še v prejšnjem bloku (10 kW), ob 23:00 pride blok s 5,4 kW
+    w = WindowBudget(at(45))
+    w.add_sample(at(45), 8.0, agreed_kw=10.0)
+    w.add_sample(at(59), 8.0, agreed_kw=10.0)
+    w.add_sample(at(60), 8.0, agreed_kw=5.4)
+    assert w.last_window.agreed_kw == 10.0
+    assert w.last_window.exceeded is False
 
 
 def test_allowed_import_full_budget_at_window_start():

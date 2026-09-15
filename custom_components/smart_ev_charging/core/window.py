@@ -87,17 +87,18 @@ class WindowBudget:
     def add_sample(self, now: datetime.datetime, p_import_kw: float, agreed_kw: float | None = None) -> None:
         """Doda vzorec. Ob prehodu čez mejo okna zapre staro okno in odpre novo."""
         p_import_kw = max(p_import_kw, 0.0)
-        self._agreed_for_close = agreed_kw
         if self._last_ts is None or now < self._last_ts:
             self._reset_to(now)
             self._last_ts, self._last_p = now, p_import_kw
+            self._agreed_for_close = agreed_kw
             return
 
         end = self._start + datetime.timedelta(minutes=WINDOW_MINUTES)
         if now >= end:
-            # prejšnja vrednost velja do konca starega okna
+            # prejšnja vrednost velja do konca starega okna; staro okno spada v blok
+            # prejšnjega vzorca, ker meja bloka pade na mejo okna
             self._energy += self._last_p * _minutes(end - self._last_ts)
-            self._close(agreed_kw)
+            self._close(self._agreed_for_close)
             self._reset_to(now)
             # in od začetka novega okna do tega vzorca (vmes preskočena okna se izgubijo)
             self._energy = self._last_p * _minutes(now - self._start)
@@ -105,6 +106,7 @@ class WindowBudget:
             self._energy += self._last_p * _minutes(now - self._last_ts)
 
         self._last_ts, self._last_p = now, p_import_kw
+        self._agreed_for_close = agreed_kw
 
     def restore_estimate(self, now: datetime.datetime, p_import_kw: float) -> None:
         """Po zagonu sredi okna: predpostavi trenutni uvoz za ves pretečeni čas."""

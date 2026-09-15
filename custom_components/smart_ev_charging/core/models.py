@@ -79,6 +79,7 @@ class RegulatorState:
     ticks_above_raise: int = 0
     ticks_below_lower: int = 0
     ticks_above_resume: int = 0
+    ticks_waiting: int = 0
     hard_threshold: bool = False
 
 
