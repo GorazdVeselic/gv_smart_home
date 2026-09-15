@@ -87,16 +87,72 @@
   },
   "entity": {
     "sensor": {
-      "tariff_block": {"name": "Tariff block"},
-      "window_energy": {"name": "Window energy"},
-      "window_projection": {"name": "Window projection"},
-      "allowed_power": {"name": "Allowed power"},
-      "other_power": {"name": "Other power"},
-      "phase_headroom": {"name": "Phase headroom"},
-      "target_level": {"name": "Target level"},
-      "tier": {"name": "Tier"},
-      "decision_reason": {"name": "Decision reason"},
-      "last_car_command": {"name": "Last car command"}
+      "tariff_block": {
+        "name": "Tariff block"
+      },
+      "window_energy": {
+        "name": "Window energy"
+      },
+      "window_projection": {
+        "name": "Window projection"
+      },
+      "allowed_power": {
+        "name": "Allowed power"
+      },
+      "other_power": {
+        "name": "Other power"
+      },
+      "phase_headroom": {
+        "name": "Phase headroom"
+      },
+      "target_level": {
+        "name": "Target level"
+      },
+      "tier": {
+        "name": "Tier"
+      },
+      "decision_reason": {
+        "name": "Decision reason"
+      },
+      "last_car_command": {
+        "name": "Last car command"
+      }
+    },
+    "number": {
+      "block_1_power": {
+        "name": "Block 1 power"
+      },
+      "block_2_power": {
+        "name": "Block 2 power"
+      },
+      "block_3_power": {
+        "name": "Block 3 power"
+      },
+      "block_4_power": {
+        "name": "Block 4 power"
+      },
+      "block_5_power": {
+        "name": "Block 5 power"
+      },
+      "reserve_power": {
+        "name": "Reserve power"
+      },
+      "fuse_current": {
+        "name": "Fuse current"
+      },
+      "fuse_margin": {
+        "name": "Fuse margin"
+      }
+    },
+    "select": {
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "off": "Off",
+          "observe": "Observe",
+          "tariff": "Tariff"
+        }
+      }
     }
   }
 }

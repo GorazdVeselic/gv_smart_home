@@ -14,7 +14,7 @@ from .engine import Engine
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["sensor", "number", "select"]
 
 
 @dataclass

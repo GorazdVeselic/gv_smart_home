@@ -97,6 +97,15 @@ class Engine:
         if CONF_KW_PER_AMP in changes:
             self.controller.levels = Controller(self._config(), dt_util.now()).levels
 
+    def set_mode(self, mode: str) -> None:
+        """Preklop načina med polnjenjem (spec 6.6): raven se ob naslednjem ticku ugotovi iz P_ev."""
+        if mode == self.mode:
+            return
+        self.mode = mode
+        _LOGGER.info("način %s", mode)
+        if self._unsubs:
+            self._tick(dt_util.now())
+
     async def async_start(self) -> None:
         meter_ids = [self.cfg_values[k] for k in (CONF_METER_POWER, CONF_METER_POWER_A, CONF_METER_POWER_B, CONF_METER_POWER_C)]
         charger_ids = [self.cfg_values[k] for k in (CONF_EV_POWER, CONF_WB_STATUS, CONF_CABLE, CONF_WB_CURRENT, CONF_CAR_LIMIT)]
