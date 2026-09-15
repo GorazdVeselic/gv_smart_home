@@ -23,6 +23,8 @@ REASON_OPTIONS = (
     "idle_no_cable",
     "idle_car_waiting",
     "idle_paused_externally",
+    "idle_no_power",
+    "car_no_power",
     "pause_window_projection",
     "pause_min_duration",
     "resume_pending",

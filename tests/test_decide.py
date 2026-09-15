@@ -370,6 +370,13 @@ def test_car_waiting_is_idle_after_five_minutes_unless_pause_is_ours():
     assert d.tier == TIER_PAUSED and d.reason == "pause_min_duration"
 
 
+def test_no_adjustment_while_car_draws_no_power():
+    d = decide(inputs(p_ev=0.0, wb_current=16, p_other=-5.0), state_at("wb_16A"), LEVELS)
+    assert d.level == "wb_16A" and d.reason == "car_no_power" and d.state.ticks_waiting == 1
+    d = decide(inputs(p_ev=0.0, wb_current=6, car_limit="8A", p_other=-5.0), state_at("car_8A"), LEVELS)
+    assert d.level == "car_8A" and d.reason == "car_no_power"
+
+
 def test_waiting_counter_resets_when_power_returns():
     waiting = inputs(status=STATUS_WAITING_CAR, p_ev=0.0, wb_current=8, car_limit="8A")
     d = run_ticks(waiting, state_at("car_8A"), WAITING_TICKS - 1)
@@ -411,8 +418,15 @@ def test_decision_reports_previous_level_after_inference():
     assert d.previous_level is None
 
 
-def test_entering_from_idle_before_car_starts_assumes_high():
+def test_idle_stays_idle_until_car_draws_power():
+    # ob priklopu in po doseženem cilju SOC status ostane Charging, moči pa ni:
+    # brez vstopa, sicer motor vsakih 5 min znova dviguje tok
     d = decide(inputs(p_ev=0.0, wb_current=6, p_other=0.3), RegulatorState(), LEVELS)
+    assert d.tier == TIER_IDLE and d.reason == "idle_no_power" and d.state == RegulatorState()
+    d = decide(inputs(p_ev=0.0, wb_current=6, status=STATUS_WAITING_CAR), RegulatorState(), LEVELS)
+    assert d.tier == TIER_IDLE
+    # avto začne: vstop v high na trenutnem toku wallboxa
+    d = decide(inputs(p_ev=4.1, wb_current=6, p_other=0.3), RegulatorState(), LEVELS)
     assert d.tier == TIER_HIGH and d.level == "wb_8A"
 
 

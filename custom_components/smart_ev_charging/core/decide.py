@@ -55,8 +55,6 @@ NO_POWER_KW = 0.1
 
 # vstop iz idle: P_ev v tem pasu okrog moči stopnje šteje kot potrditev (spec 6.5)
 CONFIRM_BAND_KW = 0.4
-# pod to močjo avto še ni začel; ob priklopu začne na Max (spec 6.5)
-STARTING_P_EV_KW = 0.5
 
 LEVEL_OFF = "off"
 
@@ -101,6 +99,8 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
         return out(None, TIER_IDLE, idle, RegulatorState())
 
     if state.level is None:
+        if ch.p_ev_kw < NO_POWER_KW:
+            return out(None, TIER_IDLE, "idle_no_power", RegulatorState())
         state = _enter_from_idle(inp, levels)
     cur = level_by_name(levels, state.level)
     previous = cur.name
@@ -110,6 +110,9 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
     state = dataclasses.replace(state, ticks_waiting=state.ticks_waiting + 1 if waiting else 0)
     if state.ticks_waiting >= WAITING_TICKS:
         return out(None, TIER_IDLE, "idle_car_waiting", RegulatorState())
+    if waiting:
+        # avto ne vleče: prilagajanje stopnje nima učinka, samo čakaj na moč ali idle
+        return out(cur, cur.tier, "car_no_power", state)
 
     # števci histereze
     state = dataclasses.replace(
@@ -195,7 +198,7 @@ def _enter_from_idle(inp: Inputs, levels: list[Level]) -> RegulatorState:
     highs = [lv for lv in levels if lv.tier == TIER_HIGH]
     wb_a = min(max(ch.wb_current, highs[0].wb_current), highs[-1].wb_current)
     wb_level = level_by_name(levels, _wb_level_name(levels, wb_a))
-    if ch.p_ev_kw < STARTING_P_EV_KW or abs(ch.p_ev_kw - wb_level.power_kw) <= CONFIRM_BAND_KW:
+    if abs(ch.p_ev_kw - wb_level.power_kw) <= CONFIRM_BAND_KW or ch.p_ev_kw > wb_level.power_kw:
         level = wb_level
     else:
         lows = [lv for lv in levels if lv.tier == TIER_LOW and lv.car_limit == ch.car_limit]

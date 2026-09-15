@@ -187,7 +187,9 @@
           "low_reserve_absorbs": "Rezerva pokrije porabo, meja ostane",
           "meter_unavailable": "Števec nedosegljiv, avto na 6A",
           "wallbox_unavailable": "Wallbox nedosegljiv",
-          "other": "Drugo"
+          "other": "Drugo",
+          "idle_no_power": "Avto ne vleče moči",
+          "car_no_power": "Avto ne vleče moči, čakam"
         }
       },
       "last_car_command": {

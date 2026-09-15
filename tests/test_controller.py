@@ -90,6 +90,6 @@ def test_hard_threshold_on_single_phase_over_fuse_limit():
 
 def test_tick_before_any_meter_sample_uses_zero_other_and_full_headroom():
     c = Controller(CFG, T0)
-    d = c.tick(at(0), charging(0.0, 6), MODE_TARIFF)
+    d = c.tick(at(0), charging(4.1, 6), MODE_TARIFF)
     assert d.p_ev_allow_kw == pytest.approx(8.0)
     assert d.level == "wb_8A"

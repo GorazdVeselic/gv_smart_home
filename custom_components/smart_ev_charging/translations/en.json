@@ -187,7 +187,9 @@
           "low_reserve_absorbs": "Reserve absorbs the load, limit kept",
           "meter_unavailable": "Meter unavailable, car at 6A",
           "wallbox_unavailable": "Wallbox unavailable",
-          "other": "Other"
+          "other": "Other",
+          "idle_no_power": "Car draws no power",
+          "car_no_power": "Car draws no power, waiting"
         }
       },
       "last_car_command": {
