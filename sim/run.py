@@ -17,7 +17,7 @@ from core.window import ClosedWindow
 
 from .adapter import SimAdapter
 from .plant import VOLTAGE, Plant
-from .profiles import house_kw, pv_kw
+from .profiles import MeasuredProfile, house_kw, pv_kw
 
 METER_PERIOD = 10
 TICK_PERIOD = 30
@@ -65,7 +65,9 @@ def simulate(
     plug_out: datetime.time | None = None,
     need_kwh: float | None = None,
     mode: str = MODE_TARIFF,
+    profile: MeasuredProfile | None = None,
 ) -> Result:
+    """pv: 'none', 'clear', 'cloudy', 'winter' za sintetični profil; z `profile` se hiša in PV bereta iz posnetka."""
     start = datetime.datetime.combine(date, datetime.time(0, 0))
     ctl = Controller(cfg, start)
     plant = Plant(kw_per_amp=cfg.kw_per_amp, need_kwh=need_kwh)
@@ -87,8 +89,12 @@ def simulate(
         plant.advance(now, STEP)
         adapter.advance(now)
 
-        house = house_kw(now)
-        pv_total = pv_kw(now, pv)
+        if profile is not None:
+            house = profile.house_kw(now)
+            pv_total = profile.pv_kw(now)
+        else:
+            house = house_kw(now)
+            pv_total = pv_kw(now, pv)
         p_ev = plant.p_ev_kw
         phase_grid = tuple(pv_total / 3 - h - p_ev / 3 for h in house)  # kW, pozitivno oddaja
         p_grid = sum(phase_grid)
@@ -140,10 +146,12 @@ def main() -> None:
     ap.add_argument("--reserve", type=float, default=2.0)
     ap.add_argument("--plug-in", type=datetime.time.fromisoformat, default=datetime.time(0, 0))
     ap.add_argument("--need-kwh", type=float, default=None)
+    ap.add_argument("--profile", help="CSV iz sim.fetch_profile; nadomesti sintetični profil in --pv")
     ap.add_argument("--log", action="store_true")
     a = ap.parse_args()
     cfg = Config(block_power_kw=DEFAULT_BLOCKS, reserve_kw=a.reserve)
-    res = simulate(a.date, a.pv, cfg, plug_in=a.plug_in, need_kwh=a.need_kwh)
+    profile = MeasuredProfile(a.profile) if a.profile else None
+    res = simulate(a.date, a.pv, cfg, plug_in=a.plug_in, need_kwh=a.need_kwh, profile=profile)
     print(res.summary())
     print("razlogi:", dict(sorted(res.reasons.items(), key=lambda kv: -kv[1])))
     if a.log:

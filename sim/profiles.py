@@ -7,8 +7,10 @@ Profil se po 24-urnem posnetku zamenja z izmerjenim.
 
 from __future__ import annotations
 
+import csv
 import datetime
 import math
+from pathlib import Path
 
 Triple = tuple[float, float, float]
 
@@ -46,3 +48,42 @@ def pv_kw(now: datetime.datetime, kind: str) -> float:
     if kind == "winter":
         return _bell(now, 8.0, 16.0, 1.5)
     raise ValueError(kind)
+
+
+class MeasuredProfile:
+    """Izmerjeni profil iz sim/fetch_profile.py: hiša po fazah in PV po času dneva.
+
+    Vrstice so na 10 s. Čas se preslika po uri dneva, zato profil velja za
+    katerikoli datum (blok se vzame iz datuma simulacije).
+    """
+
+    def __init__(self, path: str | Path) -> None:
+        self._house: dict[int, Triple] = {}
+        self._pv: dict[int, float] = {}
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                t = datetime.datetime.fromisoformat(row["time"])
+                key = self._key(t)
+                self._house[key] = (
+                    max(float(row["house_a_kw"]), 0.0),
+                    max(float(row["house_b_kw"]), 0.0),
+                    max(float(row["house_c_kw"]), 0.0),
+                )
+                self._pv[key] = float(row["pv_kw"])
+        if not self._house:
+            raise ValueError(f"prazen profil: {path}")
+
+    @staticmethod
+    def _key(t: datetime.datetime) -> int:
+        return (t.hour * 3600 + t.minute * 60 + t.second) // 10
+
+    def house_kw(self, now: datetime.datetime) -> Triple:
+        return self._house.get(self._key(now), self._nearest(self._house, now))
+
+    def pv_kw(self, now: datetime.datetime) -> float:
+        return self._pv.get(self._key(now), self._nearest(self._pv, now))
+
+    def _nearest(self, table: dict, now: datetime.datetime):
+        k = self._key(now)
+        best = min(table, key=lambda kk: abs(kk - k))
+        return table[best]
