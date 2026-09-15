@@ -159,6 +159,12 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
     else:
         new = cand
         reason = "low_adjust"
+        if new.power_kw < cur.power_kw:
+            # korak 8: spust v low samo, kadar bi trenutna stopnja okno preseglo
+            p_proj_cur = projected_average_kw(win.energy_kwmin, win.remaining_min, inp.p_other_used_kw + cur.power_kw)
+            if p_proj_cur <= tariff.agreed_kw:
+                new = cur
+                reason = "low_reserve_absorbs"
     if new == cur:
         return out(cur, TIER_LOW, "steady" if reason == "low_adjust" else reason, state)
     if level_age < LOW_HOLD:

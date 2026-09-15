@@ -244,7 +244,8 @@ def test_E_oven_on_one_phase_fuse_limits_below_tariff():
 def test_hard_threshold_in_low_tier_keeps_level_and_hold():
     st = note_hard_threshold(state_at("car_8A", age_min=3.0), LEVELS)
     assert st.level == "car_8A"
-    d = decide(inputs(tariff=BLOCK1, p_other=2.5, p_ev=2.0, wb_current=8, car_limit="8A"), st, LEVELS)
+    # hiša 3,5: pri 8A bi okno dalo 5,5 > 5,4, pri 6A 5,1
+    d = decide(inputs(tariff=BLOCK1, p_other=3.5, p_ev=2.0, wb_current=8, car_limit="8A"), st, LEVELS)
     assert d.candidate == "car_6A"
     assert d.level == "car_8A" and d.reason == "low_hold"
 
@@ -318,10 +319,20 @@ def test_low_tier_switch_needs_ten_minute_hold():
 
 
 def test_nothing_fits_gives_car_6A_not_off():
-    d = decide(inputs(tariff=BLOCK1, p_other=2.5, p_ev=2.0, wb_current=8, car_limit="8A"), state_at("car_8A"), LEVELS)
-    assert d.p_ev_allow_kw == pytest.approx(0.9)
+    d = decide(inputs(tariff=BLOCK1, p_other=3.5, p_ev=2.0, wb_current=8, car_limit="8A"), state_at("car_8A"), LEVELS)
+    assert d.p_ev_allow_kw == pytest.approx(-0.1)
     assert d.candidate == "car_6A"
-    assert d.level == "car_6A"
+    assert d.level == "car_6A" and d.reason == "low_adjust"
+
+
+def test_low_tier_keeps_8A_while_reserve_absorbs_the_load():
+    # črpalka: P_ev_allow 0,9 pod 2,0, a pri 8A okno da 5,0 < 5,4 -> brez oblačnega ukaza
+    d = decide(inputs(tariff=BLOCK1, p_other=2.5, p_ev=2.0, wb_current=8, car_limit="8A"), state_at("car_8A"), LEVELS)
+    assert d.candidate == "car_6A"
+    assert d.level == "car_8A" and d.reason == "low_reserve_absorbs"
+    # dvig 6A -> 8A gre po P_ev_allow kot prej
+    d = decide(inputs(tariff=BLOCK1, p_other=1.0, p_ev=1.6, wb_current=8, car_limit="6A"), state_at("car_6A"), LEVELS)
+    assert d.level == "car_8A"
 
 
 # ----------------------------------------------------------------------
