@@ -50,7 +50,12 @@ from .const import (
     DEFAULT_KW_PER_AMP,
     DEFAULT_MODE,
     DEFAULT_RESERVE,
+    EVENT_CAR_COMMAND_TIMEOUT,
+    EVENT_METER_UNAVAILABLE,
+    EVENT_PHASE_OVER_MARGIN,
+    EVENT_WINDOW_OVER_LIMIT,
     METER_STALE_SECONDS,
+    PHASE_OVER_MARGIN_SECONDS,
     TICK_SECONDS,
     WB_BAD_STATUSES,
 )
@@ -60,7 +65,8 @@ from .charger import Charger
 from .coordinator import SmartEvCoordinator, Snapshot
 from .core.calendar import get_holiday_name, is_holiday, is_weekend
 from .core.controller import Config, Controller
-from .core.fuse import PhaseCurrents
+from .core.fuse import PhaseCurrents, fuse_limit_a, phase_currents_a
+from .core.sequences import OUTCOME_TIMEOUT
 from .core.levels import lowest_charging_level
 from .core.models import MODE_TARIFF, ChargerState, Decision, RegulatorState, TIER_LOW
 from .core.tariff import get_prev_next_block_info, is_high_season
@@ -86,6 +92,12 @@ class Engine:
         self._last_cable: bool | None = None
         self._hard_count = 0
         self._unsubs: list = []
+        # opozorila (spec 7a): vsako se sproži enkrat na dogodek, ne na vsak vzorec
+        self._phase_over_since: datetime.datetime | None = None
+        self._phase_alarm_sent = False
+        self._meter_alarm_sent = False
+        self._window_alarm_start: datetime.datetime | None = None
+        self._timeout_alarm_time: datetime.datetime | None = None
 
     # ------------------------------------------------------------------
     # življenjski cikel
@@ -198,6 +210,10 @@ class Engine:
         st = self._state(CONF_WB_STATUS)
         return st is not None and st.state not in WB_BAD_STATUSES and self._float(CONF_EV_POWER) is not None
 
+    def _fire(self, event: str, data: dict) -> None:
+        _LOGGER.warning("opozorilo %s %s", event, data)
+        self.hass.bus.async_fire(event, data)
+
     def _p_grid_kw(self) -> float | None:
         p = self._float(CONF_METER_POWER)
         if p is None:
@@ -243,13 +259,45 @@ class Engine:
             self._push(now)
             return
         self._last_meter = now
-        hard = self.controller.on_meter(now, p_grid, self._phases(), self._p_ev_kw(), self._i_ev_a())
+        self._meter_alarm_sent = False
+        phases = self._phases()
+        hard = self.controller.on_meter(now, p_grid, phases, self._p_ev_kw(), self._i_ev_a())
         if hard:
             self._hard_count += 1
             _LOGGER.debug("trdi prag ob %s, uvoz %.2f kW", now, max(-p_grid, 0.0))
             if self.mode == MODE_TARIFF and self._wallbox_ok():
                 self.hass.async_create_task(self.charger.hard_threshold(now))
+        self._check_phase_alarm(now, phases)
+        self._check_window_alarm(now)
         self._push(now)
+
+    def _check_phase_alarm(self, now: datetime.datetime, phases: PhaseCurrents) -> None:
+        limit = fuse_limit_a(self.controller.cfg.fuse_a, self.controller.cfg.fuse_margin_a)
+        currents = phase_currents_a(phases)
+        if max(currents) <= limit:
+            self._phase_over_since = None
+            self._phase_alarm_sent = False
+            return
+        if self._phase_over_since is None:
+            self._phase_over_since = now
+        if not self._phase_alarm_sent and (now - self._phase_over_since).total_seconds() > PHASE_OVER_MARGIN_SECONDS:
+            self._phase_alarm_sent = True
+            self._fire(EVENT_PHASE_OVER_MARGIN, {"currents_a": [round(i, 1) for i in currents], "limit_a": limit})
+
+    def _check_window_alarm(self, now: datetime.datetime) -> None:
+        """Projekcija okna nad dogovorjeno močjo tudi pri kandidatu (7a): enkrat na okno."""
+        d = self.controller.last_decision
+        if d is None or d.level is None:
+            return
+        win = self.controller.window
+        if win.start == self._window_alarm_start:
+            return
+        tariff = self.controller.tariff_at(now)
+        cand_kw = next((lv.power_kw for lv in self.controller.levels if lv.name == d.candidate), 0.0)
+        proj = win.projected_average_kw(now, self.controller.p_other_used_kw + cand_kw)
+        if proj > tariff.agreed_kw and win.elapsed(now) >= 1.0:
+            self._window_alarm_start = win.start
+            self._fire(EVENT_WINDOW_OVER_LIMIT, {"projection_kw": round(proj, 2), "agreed_kw": tariff.agreed_kw, "candidate": d.candidate})
 
     @callback
     def _on_charger_event(self, event: Event) -> None:
@@ -275,17 +323,56 @@ class Engine:
             if self.charger.core.level is None and d.previous_level is not None:
                 self.charger.core.level = d.previous_level
             self.hass.async_create_task(self.charger.apply(d, now))
+        self._check_timeout_alarm()
         self._push(now)
+
+    def _check_timeout_alarm(self) -> None:
+        lc = self.charger.core.last_command
+        t = self.charger.core.last_command_time
+        if lc and lc[2] == OUTCOME_TIMEOUT and t != self._timeout_alarm_time:
+            self._timeout_alarm_time = t
+            self._fire(EVENT_CAR_COMMAND_TIMEOUT, {"command": lc[0], "value": lc[1]})
 
     def _apply_failures(self, d: Decision, now: datetime.datetime) -> Decision:
         """Spec 6.5: števec nedosegljiv ali zamrznjen več kot 60 s -> car_6A."""
         if d.level in (None, "off") or self._meter_ok(now):
             return d
+        if not self._meter_alarm_sent:
+            self._meter_alarm_sent = True
+            self._fire(EVENT_METER_UNAVAILABLE, {"last_sample": self._last_meter})
         floor = lowest_charging_level(self.controller.levels)
         st = dataclasses.replace(d.state, level=floor.name)
         self.controller.state = st
         self.controller.last_decision = d = dataclasses.replace(d, level=floor.name, tier=TIER_LOW, reason="meter_unavailable", state=st)
         return d
+
+    def _decision_log(self, now: datetime.datetime, tariff) -> dict:
+        """Spec 10: vsi vhodi v decide() in izhod, da se odločitev da rekonstruirati."""
+        ctl = self.controller
+        d = ctl.last_decision
+        ch = self.charger_state()
+        return {
+            "block": tariff.block,
+            "agreed_kw": tariff.agreed_kw,
+            "target_kw": tariff.target_kw,
+            "window_energy_kwmin": round(ctl.window.energy_kwmin, 2),
+            "window_remaining_min": round(ctl.window.remaining(now), 2),
+            "p_other_used_kw": round(ctl.p_other_used_kw, 3),
+            "i_headroom_a": round(ctl.i_headroom_a, 2),
+            "cable": ch.cable_connected,
+            "wb_status": ch.status,
+            "p_ev_kw": round(ch.p_ev_kw, 3),
+            "wb_current": ch.wb_current,
+            "car_limit": ch.car_limit,
+            "mode": self.mode,
+            "p_allow_kw": round(d.p_allow_kw, 3) if d else None,
+            "p_ev_allow_kw": round(d.p_ev_allow_kw, 3) if d else None,
+            "candidate": d.candidate if d else None,
+            "previous_level": d.previous_level if d else None,
+            "level": d.level if d else None,
+            "wallbox_ok": self._wallbox_ok(),
+            **dataclasses.asdict(ctl.state),
+        }
 
     # ------------------------------------------------------------------
     # posnetek
@@ -333,8 +420,8 @@ class Engine:
             candidate=d.candidate if d else None,
             level=d.level if d else None,
             tier=d.tier if d else "idle",
-            reason=d.reason if d else "starting",
-            decision_inputs=dataclasses.asdict(ctl.state) if d else {},
+            reason=(d.reason if self._wallbox_ok() or d.level is None else "wallbox_unavailable") if d else "starting",
+            decision_inputs=self._decision_log(now, tariff) if d else {},
             last_car_command=f"{lc[0]}={lc[1]}: {lc[2]}" if (lc := self.charger.core.last_command) else None,
             last_car_command_attrs={
                 "time": self.charger.core.last_command_time,

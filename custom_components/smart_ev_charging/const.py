@@ -60,3 +60,10 @@ DEFAULT_MODE = "observe"
 TICK_SECONDS = (0, 30)
 METER_STALE_SECONDS = 60
 WB_BAD_STATUSES = ("Error", "Locked")
+
+# dogodki za opozorila (spec 7a); avtomatizacija jih pošlje na telefon
+EVENT_WINDOW_OVER_LIMIT = f"{DOMAIN}_window_over_limit"
+EVENT_PHASE_OVER_MARGIN = f"{DOMAIN}_phase_over_margin"
+EVENT_CAR_COMMAND_TIMEOUT = f"{DOMAIN}_car_command_timeout"
+EVENT_METER_UNAVAILABLE = f"{DOMAIN}_meter_unavailable"
+PHASE_OVER_MARGIN_SECONDS = 30
