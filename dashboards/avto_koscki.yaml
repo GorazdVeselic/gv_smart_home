@@ -1,76 +1,154 @@
-# Koščki za vstavitev v obstoječe poglede z avtom (spec 7a). Predogled v dev kot pogled »Avto«.
-# 1) TELEFON: vrstica pod sliko avta (namesto treh ploščic wallboxa)
 telefon:
-  - type: grid
-    columns: 2
-    square: false
-    cards:
-      - type: conditional
-        conditions: [{condition: state, entity: sensor.ev_tier, state: high}]
-        card: {type: tile, entity: sensor.ev_tier, name: Raven, color: green, state_content: [state, level]}
-      - type: conditional
-        conditions: [{condition: state, entity: sensor.ev_tier, state: low}]
-        card: {type: tile, entity: sensor.ev_tier, name: Raven, color: blue, state_content: [state, level]}
-      - type: conditional
-        conditions: [{condition: state, entity: sensor.ev_tier, state: paused}]
-        card: {type: tile, entity: sensor.ev_tier, name: Raven, color: orange, state_content: [state]}
-      - type: conditional
-        conditions: [{condition: state, entity: sensor.ev_tier, state: idle}]
-        card: {type: tile, entity: sensor.ev_tier, name: Raven, color: grey, state_content: [state]}
-      - type: tile
-        entity: sensor.wallbox_charging_power
-        name: Moč avta
-        color: teal
-      - type: tile
-        entity: sensor.ev_allowed_power
-        name: Dovoljeno avtu
-      - type: tile
-        entity: sensor.ev_window_load
-        name: Okno
-        state_content: [state]
-      - type: tile
-        entity: sensor.ev_decision_reason
-        name: Podrobnosti
-        icon: mdi:chevron-right
-        tap_action: {action: navigate, navigation_path: /ev-polnjenje/polnjenje}
-        icon_tap_action: {action: navigate, navigation_path: /ev-polnjenje/polnjenje}
+- type: grid
+  columns: 2
+  square: false
+  cards:
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.ev_tier
+      state: high
+    card:
+      type: tile
+      entity: sensor.ev_tier
+      name: Raven
+      color: green
+      state_content:
+      - state
+      - level
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.ev_tier
+      state: low
+    card:
+      type: tile
+      entity: sensor.ev_tier
+      name: Raven
+      color: blue
+      state_content:
+      - state
+      - level
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.ev_tier
+      state: paused
+    card:
+      type: tile
+      entity: sensor.ev_tier
+      name: Raven
+      color: orange
+      state_content:
+      - state
+  - type: conditional
+    conditions:
+    - condition: state
+      entity: sensor.ev_tier
+      state: idle
+    card:
+      type: tile
+      entity: sensor.ev_tier
+      name: Raven
+      color: grey
+      state_content:
+      - state
   - type: tile
-    entity: select.ev_mode
-    name: Način delovanja
-    features: [{type: select-options}]
-    features_position: inline
-    hide_state: true
-
-# 2) TABLICA: dve Mushroom ploščici pod sliko avta, isti slog kot luči
+    entity: sensor.wallbox_charging_power
+    name: Moč avta
+    color: teal
+  - type: tile
+    entity: sensor.ev_allowed_power
+    name: Dovoljeno avtu
+  - type: tile
+    entity: sensor.ev_window_load
+    name: Okno
+    state_content:
+    - state
+  - type: tile
+    entity: sensor.ev_decision_reason
+    name: Podrobnosti
+    icon: mdi:chevron-right
+    tap_action:
+      action: navigate
+      navigation_path: /ev-polnjenje/polnjenje
+    icon_tap_action:
+      action: navigate
+      navigation_path: /ev-polnjenje/polnjenje
+- type: tile
+  entity: select.ev_mode
+  name: Način delovanja
+  features:
+  - type: select-options
+  features_position: inline
+  hide_state: true
+- type: tile
+  entity: switch.ev_charge_anyway
+  name: Polni v vsakem primeru
+  features:
+  - type: toggle
+  features_position: inline
+  hide_state: true
 tablica:
-  - type: horizontal-stack
-    cards:
-      - type: custom:mushroom-template-card
-        entity: sensor.ev_tier
-        primary: "{{ state_translated('sensor.ev_tier') }}"
-        secondary: >-
-          {% set lv = state_attr('sensor.ev_tier', 'level') %}
-          {{ state_translated('sensor.ev_target_level') if lv else state_translated('sensor.ev_decision_reason') }}
-        icon: >-
-          {% set t = states('sensor.ev_tier') %}
-          {{ {'high': 'mdi:speedometer', 'low': 'mdi:speedometer-slow', 'paused': 'mdi:pause-circle'}.get(t, 'mdi:sleep') }}
-        icon_color: >-
-          {% set t = states('sensor.ev_tier') %}
-          {{ {'high': 'green', 'low': 'blue', 'paused': 'orange'}.get(t, 'grey') }}
-        tap_action: {action: navigate, navigation_path: /ev-polnjenje/polnjenje}
-      - type: custom:mushroom-template-card
-        entity: sensor.wallbox_charging_power
-        primary: "{{ (states('sensor.wallbox_charging_power') | float(0) / 1000) | round(1) }} kW"
-        secondary: "Dovoljeno {{ states('sensor.ev_allowed_power') }} kW"
-        icon: mdi:ev-station
-        icon_color: "{{ 'teal' if states('sensor.wallbox_charging_power') | float(0) > 100 else 'grey' }}"
-        tap_action: {action: more-info}
-      - type: custom:mushroom-template-card
-        entity: sensor.ev_window_load
-        primary: "Okno {{ states('sensor.ev_window_load') }} %"
-        secondary: "Blok {{ states('sensor.ev_tariff_block') }}, {{ states('sensor.ev_agreed_power') }} kW"
-        icon: mdi:gauge
-        icon_color: >-
-          {% set l = states('sensor.ev_window_load') | float(0) %}
-          {{ 'red' if l > 100 else ('amber' if l > 80 else 'green') }}
-        tap_action: {action: navigate, navigation_path: /ev-polnjenje/polnjenje}
+- type: horizontal-stack
+  cards:
+  - type: custom:mushroom-template-card
+    entity: sensor.ev_tier
+    primary: '{{ state_translated(''sensor.ev_tier'') }}'
+    secondary: '{% set lv = state_attr(''sensor.ev_tier'', ''level'') %} {{ state_translated(''sensor.ev_target_level'') if lv else state_translated(''sensor.ev_decision_reason'') }}'
+    icon: '{% set t = states(''sensor.ev_tier'') %} {{ {''high'': ''mdi:speedometer'', ''low'': ''mdi:speedometer-slow'', ''paused'': ''mdi:pause-circle''}.get(t, ''mdi:sleep'') }}'
+    icon_color: '{% set t = states(''sensor.ev_tier'') %} {{ {''high'': ''green'', ''low'': ''blue'', ''paused'': ''orange''}.get(t, ''grey'') }}'
+    tap_action:
+      action: navigate
+      navigation_path: /ev-polnjenje/polnjenje
+  - type: custom:mushroom-template-card
+    entity: sensor.wallbox_charging_power
+    primary: '{{ (states(''sensor.wallbox_charging_power'') | float(0) / 1000) | round(1) }} kW'
+    secondary: Dovoljeno {{ states('sensor.ev_allowed_power') }} kW
+    icon: mdi:ev-station
+    icon_color: '{{ ''teal'' if states(''sensor.wallbox_charging_power'') | float(0) > 100 else ''grey'' }}'
+    tap_action:
+      action: more-info
+  - type: custom:mushroom-template-card
+    entity: sensor.ev_window_load
+    primary: Okno {{ states('sensor.ev_window_load') }} %
+    secondary: Blok {{ states('sensor.ev_tariff_block') }}, {{ states('sensor.ev_agreed_power') }} kW
+    icon: mdi:gauge
+    icon_color: '{% set l = states(''sensor.ev_window_load'') | float(0) %} {{ ''red'' if l > 100 else (''amber'' if l > 80 else ''green'') }}'
+    tap_action:
+      action: navigate
+      navigation_path: /ev-polnjenje/polnjenje
+tok_moci:
+- type: custom:power-flow-card-plus
+  watt_threshold: 1000
+  clickable_entities: true
+  display_zero_lines:
+    mode: show
+  entities:
+    grid:
+      entity: sensor.solaredge_i1_m1_ac_power
+      invert_state: true
+      name: Omrežje
+      secondary_info:
+        entity: sensor.ev_agreed_power
+        unit_of_measurement: kW
+        template: dogovorjeno {{ states('sensor.ev_agreed_power') }} kW, blok {{ states('sensor.ev_tariff_block') }}
+        display_zero: true
+    solar:
+      entity: sensor.solaredge_i1_ac_power
+      name: Sonce
+    home:
+      name: Hiša
+      subtract_individual: true
+    individual:
+    - entity: sensor.wallbox_charging_power
+      name: Avto
+      icon: mdi:car-electric
+      color: '#26a69a'
+      secondary_info:
+        template: '{{ state_translated(''sensor.ev_tier'') }}'
+      display_zero: true
+      display_zero_state: true
+- type: markdown
+  content: '**Uvoz {{ states(''sensor.ev_window_projection'') }} kW** od dovoljenih **{{ states(''sensor.ev_agreed_power'') }} kW** (blok {{ states(''sensor.ev_tariff_block'') }}, še {{ states(''sensor.ev_minutes_to_next_block'')
+    }} min). Okno **{{ states(''sensor.ev_window_load'') }} %**, prostor za avto na fazi {{ states(''sensor.ev_phase_headroom'') }} A.'

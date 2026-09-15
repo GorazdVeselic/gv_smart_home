@@ -80,8 +80,11 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
     p_proj_floor = projected_average_kw(win.energy_kwmin, win.remaining_min, inp.p_other_used_kw + floor.power_kw)
 
     previous: str | None = None
+    anyway_over = inp.charge_anyway and p_proj_floor > tariff.agreed_kw
 
     def out(level: Level | None, tier: str, reason: str, new_state: RegulatorState) -> Decision:
+        if anyway_over and reason in ("steady", "low_reserve_absorbs", "low_hold", "low_adjust"):
+            reason = "no_pause_charge_anyway"
         return Decision(
             level=level.name if level else None,
             tier=tier,
@@ -126,13 +129,16 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
 
     # korak 6: pavza in vrnitev
     if cur.tier == TIER_PAUSED:
+        if inp.charge_anyway:
+            new = highest_in_tier(levels, TIER_LOW, p_ev_allow)
+            return out(new, TIER_LOW, "resume_charge_anyway", _switched(state, new, inp.now, new_tier=True))
         if tier_age < MIN_PAUSE:
             return out(cur, TIER_PAUSED, "pause_min_duration", state)
         if state.ticks_above_resume < RESUME_TICKS:
             return out(cur, TIER_PAUSED, "resume_pending", state)
         new = highest_in_tier(levels, TIER_LOW, p_ev_allow)
         return out(new, TIER_LOW, "resume_from_pause", _switched(state, new, inp.now, new_tier=True))
-    if p_proj_floor > tariff.agreed_kw:
+    if p_proj_floor > tariff.agreed_kw and not inp.charge_anyway:
         new = level_by_name(levels, LEVEL_OFF)
         return out(new, TIER_PAUSED, "pause_window_projection", _switched(state, new, inp.now, new_tier=True))
 

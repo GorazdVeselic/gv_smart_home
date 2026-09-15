@@ -60,3 +60,11 @@ def test_cloud_commands_under_twelve_in_high_season(results, date, pv):
 def test_summary_reports_energy(results):
     for res in results.values():
         assert "napolnjeno" in res.summary()
+
+
+def test_charge_anyway_never_pauses_and_still_respects_fuse():
+    res = simulate(datetime.date(2026, 12, 8), "winter", CFG, charge_anyway=True)
+    assert "pause_window_projection" not in res.reasons
+    assert res.longest_over_fuse_avoidable_s <= 30
+    base = simulate(datetime.date(2026, 12, 8), "winter", CFG)
+    assert res.charged_kwh >= base.charged_kwh

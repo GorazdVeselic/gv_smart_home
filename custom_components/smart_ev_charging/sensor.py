@@ -29,6 +29,8 @@ REASON_OPTIONS = (
     "pause_min_duration",
     "resume_pending",
     "resume_from_pause",
+    "resume_charge_anyway",
+    "no_pause_charge_anyway",
     "lower_hard_threshold",
     "lower_after_hysteresis",
     "lower_pending",

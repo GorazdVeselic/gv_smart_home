@@ -91,6 +91,14 @@ views:
               - type: select-options
             features_position: inline
             grid_options: {columns: 12, rows: 1}
+          - type: tile
+            entity: switch.ev_charge_anyway
+            name: Polni v vsakem primeru
+            features:
+              - type: toggle
+            features_position: inline
+            hide_state: true
+            grid_options: {columns: 12, rows: 1}
 
       - type: grid
         cards:

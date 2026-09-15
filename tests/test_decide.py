@@ -60,6 +60,7 @@ def inputs(
     car_limit="Max",
     p_other=1.0,
     headroom=17.0,
+    charge_anyway=False,
 ):
     return Inputs(
         now=now,
@@ -71,6 +72,7 @@ def inputs(
         ),
         p_other_used_kw=p_other,
         i_headroom_a=headroom,
+        charge_anyway=charge_anyway,
     )
 
 
@@ -303,6 +305,25 @@ def test_stays_paused_while_projection_still_over():
     still = inputs(now=T0 + datetime.timedelta(minutes=12), tariff=BLOCK1, p_other=4.5, p_ev=0.0, status=STATUS_PAUSED)
     d = decide(still, paused.state, LEVELS)
     assert d.level == "off" and d.reason == "resume_pending"
+
+
+# ----------------------------------------------------------------------
+# stikalo »polni v vsakem primeru«
+# ----------------------------------------------------------------------
+def test_charge_anyway_never_pauses_and_accepts_window_overrun():
+    inp = inputs(tariff=BLOCK1, p_other=4.5, p_ev=1.6, wb_current=6, car_limit="6A", charge_anyway=True)
+    d = decide(inp, state_at("car_6A"), LEVELS)
+    assert d.level == "car_6A" and d.tier == TIER_LOW and d.reason == "no_pause_charge_anyway"
+    # iz high gre po običajni poti v low, ne v pavzo
+    d = decide(inputs(tariff=BLOCK1, p_other=4.5, p_ev=4.1, wb_current=6, charge_anyway=True), state_at("wb_6A"), LEVELS)
+    assert d.tier == TIER_HIGH and d.level == "wb_6A" and d.reason == "lower_pending"
+
+
+def test_charge_anyway_resumes_existing_pause_immediately():
+    paused = decide(inputs(tariff=BLOCK1, p_other=4.5), state_at("car_6A"), LEVELS)
+    assert paused.level == "off"
+    d = decide(inputs(now=T0 + TICK, tariff=BLOCK1, p_other=4.5, p_ev=0.0, status=STATUS_PAUSED, charge_anyway=True), paused.state, LEVELS)
+    assert d.level == "car_6A" and d.tier == TIER_LOW and d.reason == "resume_charge_anyway"
 
 
 # ----------------------------------------------------------------------

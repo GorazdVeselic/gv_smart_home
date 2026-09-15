@@ -66,6 +66,7 @@ def simulate(
     need_kwh: float | None = None,
     mode: str = MODE_TARIFF,
     profile: MeasuredProfile | None = None,
+    charge_anyway: bool = False,
 ) -> Result:
     """pv: 'none', 'clear', 'cloudy', 'winter' za sintetični profil; z `profile` se hiša in PV bereta iz posnetka."""
     start = datetime.datetime.combine(date, datetime.time(0, 0))
@@ -120,7 +121,7 @@ def simulate(
                 res.windows.append(ctl.window.last_window)
                 last_window_start = ctl.window.start
         if t % TICK_PERIOD == 0:
-            d = ctl.tick(now, plant.charger_state(), mode)
+            d = ctl.tick(now, plant.charger_state(), mode, charge_anyway=charge_anyway)
             res.reasons[d.reason] = res.reasons.get(d.reason, 0) + 1
             adapter.apply(d, now)
         now += STEP
@@ -147,11 +148,12 @@ def main() -> None:
     ap.add_argument("--plug-in", type=datetime.time.fromisoformat, default=datetime.time(0, 0))
     ap.add_argument("--need-kwh", type=float, default=None)
     ap.add_argument("--profile", help="CSV iz sim.fetch_profile; nadomesti sintetični profil in --pv")
+    ap.add_argument("--charge-anyway", action="store_true", help="stikalo: nikoli pavza")
     ap.add_argument("--log", action="store_true")
     a = ap.parse_args()
     cfg = Config(block_power_kw=DEFAULT_BLOCKS, reserve_kw=a.reserve)
     profile = MeasuredProfile(a.profile) if a.profile else None
-    res = simulate(a.date, a.pv, cfg, plug_in=a.plug_in, need_kwh=a.need_kwh, profile=profile)
+    res = simulate(a.date, a.pv, cfg, plug_in=a.plug_in, need_kwh=a.need_kwh, profile=profile, charge_anyway=a.charge_anyway)
     print(res.summary())
     print("razlogi:", dict(sorted(res.reasons.items(), key=lambda kv: -kv[1])))
     if a.log:

@@ -68,6 +68,15 @@
           "tariff": "mdi:cash-clock"
         }
       }
+    },
+    "switch": {
+      "charge_anyway": {
+        "default": "mdi:battery-charging-100",
+        "state": {
+          "on": "mdi:battery-charging-100",
+          "off": "mdi:battery-charging-60"
+        }
+      }
     }
   }
 }

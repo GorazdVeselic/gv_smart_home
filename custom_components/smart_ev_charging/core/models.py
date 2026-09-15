@@ -61,6 +61,7 @@ class Inputs:
     charger: ChargerState
     p_other_used_kw: float
     i_headroom_a: float
+    charge_anyway: bool = False  # stikalo: nikoli pavza, preseganje okna pri dnu sprejeto
 
     def at(self, now: datetime.datetime) -> Inputs:
         return dataclasses.replace(self, now=now)

@@ -189,7 +189,9 @@
           "wallbox_unavailable": "Wallbox unavailable",
           "other": "Other",
           "idle_no_power": "Car draws no power",
-          "car_no_power": "Car draws no power, waiting"
+          "car_no_power": "Car draws no power, waiting",
+          "resume_charge_anyway": "Resumed: charge anyway",
+          "no_pause_charge_anyway": "No pause: charge anyway, window overrun accepted"
         }
       },
       "last_car_command": {
@@ -239,6 +241,11 @@
           "observe": "Observe",
           "tariff": "Tariff"
         }
+      }
+    },
+    "switch": {
+      "charge_anyway": {
+        "name": "Charge anyway"
       }
     }
   }

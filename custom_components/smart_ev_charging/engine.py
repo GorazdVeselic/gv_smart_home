@@ -83,6 +83,7 @@ class Engine:
         self.coordinator = coordinator
         self.cfg_values = {**entry.data, **entry.options}
         self.mode: str = self.cfg_values.get(CONF_MODE, DEFAULT_MODE)
+        self.charge_anyway = False
         now = dt_util.now()
         self.controller = Controller(self._config(), now)
         self.charger = Charger(hass, self.cfg_values, self.controller.levels)
@@ -132,6 +133,14 @@ class Engine:
         if mode == MODE_TARIFF and self.controller.state.level != "off":
             self.controller.state = RegulatorState()
             self.charger.core.level = None
+        if self._unsubs:
+            self._tick(dt_util.now())
+
+    def set_charge_anyway(self, on: bool) -> None:
+        if on == self.charge_anyway:
+            return
+        self.charge_anyway = on
+        _LOGGER.info("polni v vsakem primeru: %s", on)
         if self._unsubs:
             self._tick(dt_util.now())
 
@@ -317,7 +326,7 @@ class Engine:
 
     def _tick(self, now: datetime.datetime) -> None:
         before = self.controller.state.level
-        d = self.controller.tick(now, self.charger_state(), self.mode)
+        d = self.controller.tick(now, self.charger_state(), self.mode, charge_anyway=self.charge_anyway)
         d = self._apply_failures(d, now)
         if d.state.level != before:
             self._save_state()
@@ -367,6 +376,7 @@ class Engine:
             "wb_current": ch.wb_current,
             "car_limit": ch.car_limit,
             "mode": self.mode,
+            "charge_anyway": self.charge_anyway,
             "p_allow_kw": round(d.p_allow_kw, 3) if d else None,
             "p_ev_allow_kw": round(d.p_ev_allow_kw, 3) if d else None,
             "candidate": d.candidate if d else None,

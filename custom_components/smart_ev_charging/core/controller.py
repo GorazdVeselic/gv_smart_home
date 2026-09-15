@@ -70,7 +70,7 @@ class Controller:
             return True
         return False
 
-    def tick(self, now: datetime.datetime, charger: ChargerState, mode: str) -> Decision:
+    def tick(self, now: datetime.datetime, charger: ChargerState, mode: str, charge_anyway: bool = False) -> Decision:
         inp = Inputs(
             now=now,
             mode=mode,
@@ -79,6 +79,7 @@ class Controller:
             charger=charger,
             p_other_used_kw=self.p_other_used_kw,
             i_headroom_a=self.i_headroom_a,
+            charge_anyway=charge_anyway,
         )
         d = decide(inp, self.state, self.levels)
         self.state = d.state

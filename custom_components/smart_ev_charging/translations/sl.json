@@ -189,7 +189,9 @@
           "wallbox_unavailable": "Wallbox nedosegljiv",
           "other": "Drugo",
           "idle_no_power": "Avto ne vleče moči",
-          "car_no_power": "Avto ne vleče moči, čakam"
+          "car_no_power": "Avto ne vleče moči, čakam",
+          "resume_charge_anyway": "Vrnitev: polni v vsakem primeru",
+          "no_pause_charge_anyway": "Brez pavze: polni v vsakem primeru, preseganje okna sprejeto"
         }
       },
       "last_car_command": {
@@ -239,6 +241,11 @@
           "observe": "Opazuj",
           "tariff": "Tarifa"
         }
+      }
+    },
+    "switch": {
+      "charge_anyway": {
+        "name": "Polni v vsakem primeru"
       }
     }
   }
