@@ -33,7 +33,10 @@ def main() -> None:
     tablet_detail = dict(tablet_detail, title="Tablica podrobnosti (predogled)", path="tablica-polnjenje")
     d["views"] = [v for v in d["views"] if v.get("path") not in ("avto", "tablica", "tablica-polnjenje")] + [phone, tablet, tablet_detail]
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(yaml.safe_dump(d, allow_unicode=True, sort_keys=False, width=200))
+    text = yaml.safe_dump(d, allow_unicode=True, sort_keys=False, width=200)
+    # produkcijske poti tablične plošče -> dev zavihki
+    text = text.replace("/dashboard-tablet/polnjenje", "/ev-polnjenje/tablica-polnjenje").replace("/dashboard-tablet/0", "/ev-polnjenje/tablica")
+    OUT.write_text(text)
     print(f"plošča za dev: {OUT}")
 
 
