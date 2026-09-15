@@ -21,7 +21,7 @@ views:
             card:
               type: tile
               entity: sensor.ev_tier
-              name: Raven
+              name: Raven polnjenja
               color: green
               state_content: [state, level]
               grid_options: {columns: 6, rows: 1}
@@ -33,7 +33,7 @@ views:
             card:
               type: tile
               entity: sensor.ev_tier
-              name: Raven
+              name: Raven polnjenja
               color: blue
               state_content: [state, level]
               grid_options: {columns: 6, rows: 1}
@@ -45,7 +45,7 @@ views:
             card:
               type: tile
               entity: sensor.ev_tier
-              name: Raven
+              name: Raven polnjenja
               color: orange
               state_content: [state, level]
               grid_options: {columns: 6, rows: 1}
@@ -57,7 +57,7 @@ views:
             card:
               type: tile
               entity: sensor.ev_tier
-              name: Raven
+              name: Raven polnjenja
               color: grey
               state_content: [state]
               grid_options: {columns: 6, rows: 1}
@@ -84,7 +84,7 @@ views:
             grid_options: {columns: 6, rows: 1}
           - type: tile
             entity: select.ev_mode
-            name: Način
+            name: Način delovanja
             hide_state: true
             vertical: false
             features:
@@ -114,7 +114,14 @@ views:
           - type: tile
             entity: sensor.ev_tariff_block
             name: Blok
-            state_content: [state, agreed_kw, minutes_to_next]
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_agreed_power
+            name: Dogovorjena moč
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_minutes_to_next_block
+            name: Nov blok čez
             grid_options: {columns: 6, rows: 1}
           - type: tile
             entity: sensor.ev_window_projection
@@ -122,8 +129,7 @@ views:
             grid_options: {columns: 6, rows: 1}
           - type: tile
             entity: sensor.ev_window_energy
-            name: Energija
-            state_content: [state, remaining_min]
+            name: Energija okna
             grid_options: {columns: 6, rows: 1}
           - type: tile
             entity: sensor.ev_allowed_power
@@ -152,8 +158,7 @@ views:
             grid_options: {columns: 6, rows: 1}
           - type: tile
             entity: sensor.ev_phase_headroom
-            name: Prostor na fazi
-            state_content: [state, house_a, house_b, house_c]
+            name: Prostor za avto na najslabši fazi
             grid_options: {columns: 12, rows: 1}
           - type: gauge
             entity: sensor.ev_phase_current_a

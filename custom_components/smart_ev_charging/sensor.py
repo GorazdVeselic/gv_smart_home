@@ -121,6 +121,22 @@ SENSORS: tuple[EvSensorDescription, ...] = (
         precision=1,
     ),
     EvSensorDescription(
+        "agreed_power",
+        lambda s: s.agreed_kw,
+        lambda s: {"target_kw": s.target_kw, "reserve_kw": s.reserve_kw},
+        unit="kW",
+        device_class=SensorDeviceClass.POWER,
+        precision=1,
+    ),
+    EvSensorDescription(
+        "minutes_to_next_block",
+        lambda s: s.tariff_attrs.get("minutes_to_next"),
+        lambda s: {"next_block": s.tariff_attrs.get("next_block")},
+        unit="min",
+        device_class=SensorDeviceClass.DURATION,
+        precision=0,
+    ),
+    EvSensorDescription(
         "last_window",
         lambda s: _round(s.last_window_avg_kw),
         lambda s: {"exceeded": s.last_window_exceeded},

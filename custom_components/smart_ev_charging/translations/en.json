@@ -195,6 +195,12 @@
       },
       "last_window": {
         "name": "Last window"
+      },
+      "agreed_power": {
+        "name": "Agreed power"
+      },
+      "minutes_to_next_block": {
+        "name": "Minutes to next block"
       }
     },
     "number": {

@@ -195,6 +195,12 @@
       },
       "last_window": {
         "name": "Zadnje okno"
+      },
+      "agreed_power": {
+        "name": "Dogovorjena moč"
+      },
+      "minutes_to_next_block": {
+        "name": "Do naslednjega bloka"
       }
     },
     "number": {

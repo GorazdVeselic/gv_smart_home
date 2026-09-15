@@ -51,6 +51,12 @@
       },
       "last_window": {
         "default": "mdi:history"
+      },
+      "agreed_power": {
+        "default": "mdi:transmission-tower"
+      },
+      "minutes_to_next_block": {
+        "default": "mdi:timer-outline"
       }
     },
     "select": {
