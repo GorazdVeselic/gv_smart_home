@@ -26,10 +26,12 @@ def main() -> None:
              "sections": [{"type": "grid", "cards": car + k["tok_moci"] + k["telefon"] + [entities]}]}
     car_tablet = json.loads(CAR_TABLET.read_text()) if CAR_TABLET.exists() else {"type": "markdown", "content": "kartica z avtom"}
     # tablica: pod kartico z avtom vrstica treh Mushroom ploščic, kot je v tvojem vertical-stacku
-    car_tablet = dict(car_tablet, cards=car_tablet.get("cards", []) + k["tablica"])
+    car_tablet = dict(car_tablet, cards=car_tablet.get("cards", []) + k["tablica_gumb"])
     tablet = {"title": "Tablica (predogled)", "path": "tablica", "icon": "mdi:tablet", "type": "panel",
               "cards": [{"type": "custom:stack-in-card", "cards": [car_tablet]}]}
-    d["views"] = [v for v in d["views"] if v.get("path") not in ("avto", "tablica")] + [phone, tablet]
+    tablet_detail = yaml.safe_load((ROOT / "dashboards" / "tablica_polnjenje.yaml").read_text())
+    tablet_detail = dict(tablet_detail, title="Tablica podrobnosti (predogled)", path="tablica-polnjenje")
+    d["views"] = [v for v in d["views"] if v.get("path") not in ("avto", "tablica", "tablica-polnjenje")] + [phone, tablet, tablet_detail]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(yaml.safe_dump(d, allow_unicode=True, sort_keys=False, width=200))
     print(f"plošča za dev: {OUT}")

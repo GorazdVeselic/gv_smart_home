@@ -1,0 +1,103 @@
+# Podstran »Polnjenje« za tablico A8 (1280 x 800 v aplikaciji, kiosk brez glave): en zaslon, brez pomikanja.
+# Gumb »Nazaj« vodi na domači pogled tablice. Vstavi se kot pogled v ploščo dashboard-tablet.
+title: Polnjenje
+path: polnjenje
+icon: mdi:ev-station
+type: panel
+cards:
+  - type: vertical-stack
+    cards:
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Nazaj
+            icon: mdi:arrow-left
+            icon_color: grey
+            tap_action: {action: navigate, navigation_path: /dashboard-tablet/0}
+          - type: custom:mushroom-template-card
+            entity: sensor.ev_tier
+            primary: "{{ state_translated('sensor.ev_tier') }}"
+            secondary: >-
+              {% set lv = state_attr('sensor.ev_tier', 'level') %}
+              {{ state_translated('sensor.ev_target_level') if lv else state_translated('sensor.ev_decision_reason') }}
+            icon: >-
+              {% set t = states('sensor.ev_tier') %}
+              {{ {'high': 'mdi:speedometer', 'low': 'mdi:speedometer-slow', 'paused': 'mdi:pause-circle'}.get(t, 'mdi:sleep') }}
+            icon_color: >-
+              {% set t = states('sensor.ev_tier') %}
+              {{ {'high': 'green', 'low': 'blue', 'paused': 'orange'}.get(t, 'grey') }}
+          - type: custom:mushroom-template-card
+            entity: sensor.ev_decision_reason
+            primary: "{{ state_translated('sensor.ev_decision_reason') }}"
+            secondary: "Dovoljeno avtu {{ states('sensor.ev_allowed_power') }} kW"
+            icon: mdi:head-question
+            icon_color: blue
+          - type: custom:mushroom-template-card
+            entity: select.ev_mode
+            primary: "Način: {{ state_translated('select.ev_mode') }}"
+            secondary: dotik preklopi
+            icon: mdi:tune
+            icon_color: "{{ {'tariff': 'green', 'observe': 'blue'}.get(states('select.ev_mode'), 'grey') }}"
+            tap_action:
+              action: perform-action
+              perform_action: select.select_next
+              target: {entity_id: select.ev_mode}
+              data: {cycle: true}
+          - type: custom:mushroom-entity-card
+            entity: switch.ev_charge_anyway
+            name: Polni v vsakem primeru
+            tap_action: {action: toggle}
+      - type: horizontal-stack
+        cards:
+          - type: custom:power-flow-card-plus
+            watt_threshold: 1000
+            clickable_entities: false
+            entities:
+              grid:
+                entity: sensor.solaredge_i1_m1_ac_power
+                invert_state: true
+                name: "Omrežje, blok {{ states('sensor.ev_tariff_block') }}"
+                secondary_info: {entity: sensor.ev_agreed_power, unit_of_measurement: kW, template: "max {{ states('sensor.ev_agreed_power') }} kW", display_zero: true}
+              solar: {entity: sensor.solaredge_i1_ac_power, name: Sonce}
+              home: {name: Hiša, subtract_individual: true}
+              individual:
+                - entity: sensor.wallbox_charging_power
+                  name: Avto
+                  icon: mdi:car-electric
+                  color: "#26a69a"
+                  display_zero: true
+                  display_zero_state: true
+                  secondary_info: {template: "{{ state_translated('sensor.ev_tier') }}"}
+          - type: vertical-stack
+            cards:
+              - type: gauge
+                entity: sensor.ev_window_load
+                name: Obremenitev okna
+                min: 0
+                max: 120
+                needle: true
+                segments:
+                  - {from: 0, color: var(--success-color)}
+                  - {from: 80, color: var(--warning-color)}
+                  - {from: 100, color: var(--error-color)}
+              - type: horizontal-stack
+                cards:
+                  - {type: tile, entity: sensor.ev_window_projection, name: Projekcija}
+                  - {type: tile, entity: sensor.ev_minutes_to_next_block, name: Nov blok čez}
+              - type: horizontal-stack
+                cards:
+                  - {type: tile, entity: sensor.ev_other_power, name: Hiša brez avta}
+                  - {type: tile, entity: sensor.ev_phase_headroom, name: Prostor na fazi}
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - {type: gauge, entity: sensor.ev_phase_current_a, name: Faza A, min: 0, max: 20, severity: {green: 0, yellow: 14, red: 17}}
+                  - {type: gauge, entity: sensor.ev_phase_current_b, name: Faza B, min: 0, max: 20, severity: {green: 0, yellow: 14, red: 17}}
+                  - {type: gauge, entity: sensor.ev_phase_current_c, name: Faza C, min: 0, max: 20, severity: {green: 0, yellow: 14, red: 17}}
+              - type: history-graph
+                hours_to_show: 3
+                entities:
+                  - {entity: sensor.ev_window_projection, name: Uvoz}
+                  - {entity: sensor.ev_allowed_power, name: Dovoljeno avtu}
+                  - {entity: sensor.ev_other_power, name: Hiša}

@@ -152,3 +152,14 @@ tok_moci:
 - type: markdown
   content: '**Uvoz {{ states(''sensor.ev_window_projection'') }} kW** od dovoljenih **{{ states(''sensor.ev_agreed_power'') }} kW** (blok {{ states(''sensor.ev_tariff_block'') }}, še {{ states(''sensor.ev_minutes_to_next_block'')
     }} min). Okno **{{ states(''sensor.ev_window_load'') }} %**, prostor za avto na fazi {{ states(''sensor.ev_phase_headroom'') }} A.'
+tablica_gumb:
+- type: custom:mushroom-template-card
+  entity: sensor.ev_tier
+  primary: Polnjenje
+  secondary: '{{ state_translated(''sensor.ev_tier'') }}{% set p = states(''sensor.wallbox_charging_power'') | float(0) %}{% if p > 100 %}, {{ (p / 1000) | round(1) }} kW{% endif %}'
+  icon: '{% set t = states(''sensor.ev_tier'') %}{{ {''high'': ''mdi:speedometer'', ''low'': ''mdi:speedometer-slow'', ''paused'': ''mdi:pause-circle''}.get(t, ''mdi:ev-station'') }}'
+  icon_color: '{% set t = states(''sensor.ev_tier'') %}{{ {''high'': ''green'', ''low'': ''blue'', ''paused'': ''orange''}.get(t, ''grey'') }}'
+  tap_action:
+    action: navigate
+    navigation_path: /dashboard-tablet/polnjenje
+_opomba_tablica: 'tablica: na domači pogled gre samo tablica_gumb poleg gumba Predgretje; podrobnosti so na podstrani dashboards/tablica_polnjenje.yaml'
