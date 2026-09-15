@@ -169,8 +169,9 @@ def test_hard_threshold_in_high_sends_wallbox_floor_even_when_busy():
     sent = a.hard_threshold(at(5))
     assert [(s.cmd, s.value) for s in sent] == [(CMD_WB_CURRENT, 6)]
     assert a.level == "wb_6A"
+    assert a.hard_threshold(at(6)) == []  # že na dnu
     a.level = "car_8A"
-    assert a.hard_threshold(at(6)) == []
+    assert a.hard_threshold(at(7)) == []
 
 
 def test_idle_resets_wallbox_to_floor_and_cancels_sequence():

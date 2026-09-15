@@ -203,6 +203,8 @@ class AdapterCore:
         floor = wb_floor(self.levels)
         if self.runner is not None and self.runner.kind in ("raise", "high_adjust"):
             self.runner = None
+        if self.level == f"wb_{floor}A":
+            return []  # že na dnu, vzorci nad pragom se ponavljajo vsakih 10 s
         self.level = f"wb_{floor}A"
         self.log.append((now, f"hard_threshold wb->{floor}A"))
         return [Step(CMD_WB_CURRENT, floor)]
