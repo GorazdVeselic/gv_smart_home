@@ -1,8 +1,12 @@
 {
-  "name": "GV Smart Home",
-  "domains": ["gv_smart_home"],
-  "country": ["SI"],
+  "name": "Smart EV Charging",
+  "domains": [
+    "smart_ev_charging"
+  ],
+  "country": [
+    "SI"
+  ],
   "render_readme": true,
-  "iot_class": "Local Polling",
-  "homeassistant": "2025.0.0"
+  "iot_class": "Local Push",
+  "homeassistant": "2026.6.0"
 }
