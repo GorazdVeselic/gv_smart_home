@@ -69,7 +69,7 @@ from .core.fuse import PhaseCurrents, fuse_limit_a, phase_currents_a
 from .core.sequences import OUTCOME_TIMEOUT
 from .core.levels import lowest_charging_level
 from .core.models import MODE_TARIFF, ChargerState, Decision, RegulatorState, TIER_LOW
-from .core.tariff import get_prev_next_block_info, is_high_season
+from .core.tariff import get_blocks_for_today, get_prev_next_block_info, is_high_season
 
 STORE_VERSION = 1
 
@@ -406,11 +406,15 @@ class Engine:
             target_kw=tariff.target_kw,
             tariff_attrs={
                 "next_block": info["next_block"],
+                "next_tariff_block": info["next_block"],
+                "next_block_higher": info["next_block"] > tariff.block,
                 "minutes_to_next": info["minutes_to_next"],
                 "high_season": is_high_season(date),
                 "weekend": is_weekend(date),
                 "holiday": is_holiday(date),
                 "holiday_name": get_holiday_name(date),
+                # 24 blokov dneva kot niz z vejicami, kot ga bere network-tariff-card
+                "blocks": ",".join(str(b) for b in get_blocks_for_today(date)),
             },
             meter_ok=self._meter_ok(now),
             wallbox_ok=self._wallbox_ok(),

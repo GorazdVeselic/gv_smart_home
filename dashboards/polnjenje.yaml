@@ -119,10 +119,14 @@ views:
               - from: 100
                 color: var(--error-color)
             grid_options: {columns: 6, rows: 3}
-          - type: tile
+          - type: custom:network-tariff-card
             entity: sensor.ev_tariff_block
-            name: Blok
-            grid_options: {columns: 6, rows: 1}
+            name: Trenutni blok
+            outerRadius: 30
+            innerRadius: 20
+            showHours: true
+            offsetHours: true
+            grid_options: {columns: 6, rows: 5}
           - type: tile
             entity: sensor.ev_agreed_power
             name: Dogovorjena moč
