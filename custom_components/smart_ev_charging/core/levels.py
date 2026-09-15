@@ -23,7 +23,7 @@ CAR_LIMIT_MAX = "Max"
 CAR_LEVEL_POWER_KW = {"6A": 1.6, "8A": 2.0}
 
 # Wallbox v ravni low stoji na tej vrednosti, avto omejuje sam.
-WB_CURRENT_IN_LOW_TIER = 8
+WB_CURRENT_IN_LOW_TIER = 6
 
 DEFAULT_KW_PER_AMP = 0.69
 DEFAULT_WB_MIN_CURRENT = 6

@@ -37,7 +37,7 @@ def test_tiers_and_commands(levels):
     off = level_by_name(levels, "off")
     assert off.tier == TIER_PAUSED and off.car_limit is None
     low = level_by_name(levels, "car_8A")
-    assert low.tier == TIER_LOW and low.car_limit == "8A" and low.wb_current == 8
+    assert low.tier == TIER_LOW and low.car_limit == "8A" and low.wb_current == 6
     high = level_by_name(levels, "wb_9A")
     assert high.tier == TIER_HIGH and high.car_limit == "Max" and high.wb_current == 9
 
