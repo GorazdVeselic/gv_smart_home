@@ -21,6 +21,7 @@ from homeassistant.helpers.event import async_track_state_change_event, async_tr
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    DOMAIN,
     CONF_BLOCK_POWER,
     CONF_CABLE,
     CONF_CAR_LIMIT,
@@ -53,12 +54,18 @@ from .const import (
     TICK_SECONDS,
     WB_BAD_STATUSES,
 )
+from homeassistant.helpers.storage import Store
+
+from .charger import Charger
 from .coordinator import SmartEvCoordinator, Snapshot
 from .core.calendar import get_holiday_name, is_holiday, is_weekend
 from .core.controller import Config, Controller
 from .core.fuse import PhaseCurrents
-from .core.models import ChargerState
+from .core.levels import lowest_charging_level
+from .core.models import MODE_TARIFF, ChargerState, Decision, RegulatorState, TIER_LOW
 from .core.tariff import get_prev_next_block_info, is_high_season
+
+STORE_VERSION = 1
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +79,10 @@ class Engine:
         self.mode: str = self.cfg_values.get(CONF_MODE, DEFAULT_MODE)
         now = dt_util.now()
         self.controller = Controller(self._config(), now)
+        self.charger = Charger(hass, self.cfg_values, self.controller.levels)
+        self._store: Store = Store(hass, STORE_VERSION, f"{DOMAIN}.{entry.entry_id}.state")
         self._last_meter: datetime.datetime | None = None
+        self._started = now
         self._last_cable: bool | None = None
         self._hard_count = 0
         self._unsubs: list = []
@@ -98,15 +108,49 @@ class Engine:
             self.controller.levels = Controller(self._config(), dt_util.now()).levels
 
     def set_mode(self, mode: str) -> None:
-        """Preklop načina med polnjenjem (spec 6.6): raven se ob naslednjem ticku ugotovi iz P_ev."""
+        """Preklop načina (spec 6.6): v tariff se raven ob naslednjem ticku ugotovi iz P_ev.
+
+        Lastna pavza se ohrani, sicer bi vrnitev iz pavze izgubila zagon avta.
+        """
         if mode == self.mode:
             return
         self.mode = mode
         _LOGGER.info("način %s", mode)
+        if mode == MODE_TARIFF and self.controller.state.level != "off":
+            self.controller.state = RegulatorState()
+            self.charger.core.level = None
         if self._unsubs:
             self._tick(dt_util.now())
 
+    async def _async_restore(self) -> None:
+        data = await self._store.async_load()
+        if not data:
+            return
+        try:
+            st = RegulatorState(
+                level=data.get("level"),
+                tier_since=dt_util.parse_datetime(data["tier_since"]) if data.get("tier_since") else None,
+                level_since=dt_util.parse_datetime(data["level_since"]) if data.get("level_since") else None,
+            )
+        except (KeyError, TypeError, ValueError):
+            return
+        self.controller.state = st
+        self.charger.core.level = st.level
+        _LOGGER.info("obnovljeno stanje: %s", st.level)
+
+    def _save_state(self) -> None:
+        st = self.controller.state
+        self._store.async_delay_save(
+            lambda: {
+                "level": st.level,
+                "tier_since": st.tier_since.isoformat() if st.tier_since else None,
+                "level_since": st.level_since.isoformat() if st.level_since else None,
+            },
+            5,
+        )
+
     async def async_start(self) -> None:
+        await self._async_restore()
         meter_ids = [self.cfg_values[k] for k in (CONF_METER_POWER, CONF_METER_POWER_A, CONF_METER_POWER_B, CONF_METER_POWER_C)]
         charger_ids = [self.cfg_values[k] for k in (CONF_EV_POWER, CONF_WB_STATUS, CONF_CABLE, CONF_WB_CURRENT, CONF_CAR_LIMIT)]
         self._unsubs.append(async_track_state_change_event(self.hass, [meter_ids[0]], self._on_meter_event))
@@ -119,6 +163,7 @@ class Engine:
         for unsub in self._unsubs:
             unsub()
         self._unsubs.clear()
+        self.charger.stop()
 
     # ------------------------------------------------------------------
     # branje entitet
@@ -145,10 +190,9 @@ class Engine:
         return st.state.lower() in ("on", "true", "1", "connected")
 
     def _meter_ok(self, now: datetime.datetime) -> bool:
-        st = self._state(CONF_METER_POWER)
-        if st is None:
-            return False
-        return (now - st.last_updated).total_seconds() <= METER_STALE_SECONDS
+        """Zadnji dober vzorec pred manj kot 60 s (spec 6.6: nedosegljiv ali zamrznjen)."""
+        ref = self._last_meter or self._started
+        return (now - ref).total_seconds() <= METER_STALE_SECONDS
 
     def _wallbox_ok(self) -> bool:
         st = self._state(CONF_WB_STATUS)
@@ -194,7 +238,8 @@ class Engine:
 
     def _on_meter(self, now: datetime.datetime) -> None:
         p_grid = self._p_grid_kw()
-        if p_grid is None:
+        st = self._state(CONF_METER_POWER)
+        if p_grid is None or st is None or (now - st.last_updated).total_seconds() > METER_STALE_SECONDS:
             self._push(now)
             return
         self._last_meter = now
@@ -202,6 +247,8 @@ class Engine:
         if hard:
             self._hard_count += 1
             _LOGGER.debug("trdi prag ob %s, uvoz %.2f kW", now, max(-p_grid, 0.0))
+            if self.mode == MODE_TARIFF and self._wallbox_ok():
+                self.hass.async_create_task(self.charger.hard_threshold(now))
         self._push(now)
 
     @callback
@@ -219,8 +266,26 @@ class Engine:
         self._tick(dt_util.as_local(now))
 
     def _tick(self, now: datetime.datetime) -> None:
-        self.controller.tick(now, self.charger_state(), self.mode)
+        before = self.controller.state.level
+        d = self.controller.tick(now, self.charger_state(), self.mode)
+        d = self._apply_failures(d, now)
+        if d.state.level != before:
+            self._save_state()
+        if self.mode == MODE_TARIFF and self._wallbox_ok():
+            if self.charger.core.level is None and d.previous_level is not None:
+                self.charger.core.level = d.previous_level
+            self.hass.async_create_task(self.charger.apply(d, now))
         self._push(now)
+
+    def _apply_failures(self, d: Decision, now: datetime.datetime) -> Decision:
+        """Spec 6.5: števec nedosegljiv ali zamrznjen več kot 60 s -> car_6A."""
+        if d.level in (None, "off") or self._meter_ok(now):
+            return d
+        floor = lowest_charging_level(self.controller.levels)
+        st = dataclasses.replace(d.state, level=floor.name)
+        self.controller.state = st
+        self.controller.last_decision = d = dataclasses.replace(d, level=floor.name, tier=TIER_LOW, reason="meter_unavailable", state=st)
+        return d
 
     # ------------------------------------------------------------------
     # posnetek
@@ -270,5 +335,13 @@ class Engine:
             tier=d.tier if d else "idle",
             reason=d.reason if d else "starting",
             decision_inputs=dataclasses.asdict(ctl.state) if d else {},
+            last_car_command=f"{lc[0]}={lc[1]}: {lc[2]}" if (lc := self.charger.core.last_command) else None,
+            last_car_command_attrs={
+                "time": self.charger.core.last_command_time,
+                "adapter_level": self.charger.core.level,
+                "busy": self.charger.core.busy,
+                "timeouts": self.charger.core.timeouts,
+                "rate_limited": self.charger.core.rate_limited,
+            },
         )
         self.coordinator.push(snap)

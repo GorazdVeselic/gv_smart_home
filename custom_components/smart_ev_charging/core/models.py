@@ -92,3 +92,4 @@ class Decision:
     p_ev_allow_kw: float
     candidate: str
     state: RegulatorState
+    previous_level: str | None = None  # stopnja, ki jo je decide() vzel za trenutno (po vstopu iz idle ugotovljena iz P_ev)

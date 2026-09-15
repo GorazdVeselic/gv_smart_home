@@ -81,6 +81,8 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
     cand = highest_level_at_or_below(levels, p_ev_allow) or floor
     p_proj_floor = projected_average_kw(win.energy_kwmin, win.remaining_min, inp.p_other_used_kw + floor.power_kw)
 
+    previous: str | None = None
+
     def out(level: Level | None, tier: str, reason: str, new_state: RegulatorState) -> Decision:
         return Decision(
             level=level.name if level else None,
@@ -90,6 +92,7 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
             p_ev_allow_kw=p_ev_allow,
             candidate=cand.name,
             state=dataclasses.replace(new_state, hard_threshold=False),
+            previous_level=previous,
         )
 
     # korak 1
@@ -100,6 +103,7 @@ def decide(inp: Inputs, state: RegulatorState, levels: list[Level]) -> Decision:
     if state.level is None:
         state = _enter_from_idle(inp, levels)
     cur = level_by_name(levels, state.level)
+    previous = cur.name
 
     # avto dosegel cilj: brez moči več kot 5 min, kadar pavza ni naša
     waiting = cur.tier != TIER_PAUSED and (ch.status == STATUS_WAITING_CAR or ch.p_ev_kw < NO_POWER_KW)

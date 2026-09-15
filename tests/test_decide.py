@@ -404,6 +404,13 @@ def test_high_floor_between_thresholds_stays_wb_6A():
     assert d.state.ticks_below_lower == 0
 
 
+def test_decision_reports_previous_level_after_inference():
+    d = decide(inputs(p_ev=1.6, wb_current=6, car_limit="6A", p_other=7.0), RegulatorState(), LEVELS)
+    assert d.previous_level == "car_6A"
+    d = decide(inputs(mode=MODE_OFF), RegulatorState(), LEVELS)
+    assert d.previous_level is None
+
+
 def test_entering_from_idle_before_car_starts_assumes_high():
     d = decide(inputs(p_ev=0.0, wb_current=6, p_other=0.3), RegulatorState(), LEVELS)
     assert d.tier == TIER_HIGH and d.level == "wb_8A"
