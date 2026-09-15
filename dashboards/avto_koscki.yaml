@@ -128,11 +128,11 @@ tok_moci:
     grid:
       entity: sensor.solaredge_i1_m1_ac_power
       invert_state: true
-      name: Omrežje
+      name: Omrežje, blok {{ states('sensor.ev_tariff_block') }}
       secondary_info:
         entity: sensor.ev_agreed_power
         unit_of_measurement: kW
-        template: dogovorjeno {{ states('sensor.ev_agreed_power') }} kW, blok {{ states('sensor.ev_tariff_block') }}
+        template: max {{ states('sensor.ev_agreed_power') }} kW
         display_zero: true
     solar:
       entity: sensor.solaredge_i1_ac_power
