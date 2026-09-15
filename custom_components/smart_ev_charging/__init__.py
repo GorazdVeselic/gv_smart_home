@@ -1,50 +1,54 @@
+"""Smart EV Charging: polnjenje po omrežninskih blokih z rezervo in varovalko po fazah."""
+
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN
-from .coordinator.sampling_coordinator import SamplingCoordinator
-from .coordinator.control_coordinator import ControlCoordinator
-from .coordinator.tariff_coordinator import TariffCoordinator
+from .const import DEFAULT_ENTITIES
+from .coordinator import SmartEvCoordinator
+from .engine import Engine
 
 _LOGGER = logging.getLogger(__name__)
 
+PLATFORMS = ["sensor"]
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    _LOGGER.info("Initializing Smart EV Charging integration")
 
-    hass.data.setdefault(DOMAIN, {})
+@dataclass
+class RuntimeData:
+    coordinator: SmartEvCoordinator
+    engine: Engine
 
-    sampling = SamplingCoordinator(hass, entry)
-    control = ControlCoordinator(hass, entry)
-    tariff = TariffCoordinator(hass, entry)
 
-    hass.data[DOMAIN][entry.entry_id] = {
-        "sampling": sampling,
-        "control": control,
-        "tariff": tariff,
-    }
+type SmartEvConfigEntry = ConfigEntry[RuntimeData]
 
-    _LOGGER.debug("Starting coordinators (first refresh)")
-    await sampling.async_start()
-    await control.async_start()
-    await tariff.async_start()
 
-    _LOGGER.debug("Forwarding sensor platform setup")
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
-
-    _LOGGER.info("Smart EV Charging initialized")
+async def async_setup_entry(hass: HomeAssistant, entry: SmartEvConfigEntry) -> bool:
+    coordinator = SmartEvCoordinator(hass, entry)
+    engine = Engine(hass, entry, coordinator)
+    entry.runtime_data = RuntimeData(coordinator, engine)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await engine.async_start()
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    _LOGGER.info("Unloading Smart EV Charging integration")
+async def _async_options_updated(hass: HomeAssistant, entry: SmartEvConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
 
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, ["sensor"])
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
 
-    return unload_ok
+async def async_unload_entry(hass: HomeAssistant, entry: SmartEvConfigEntry) -> bool:
+    entry.runtime_data.engine.stop()
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """v1 je imela samo moči blokov; v2 doda entitete s privzetimi produkcijskimi id-ji."""
+    if entry.version == 1:
+        data = {**DEFAULT_ENTITIES, **entry.data}
+        data.pop("sampling_interval", None)
+        hass.config_entries.async_update_entry(entry, data=data, version=2)
+    return True

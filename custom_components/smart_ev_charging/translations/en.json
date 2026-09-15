@@ -1,3 +1,102 @@
 {
-  "title": "Smart EV Charging"
+  "title": "Smart EV Charging",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Input entities",
+        "data": {
+          "meter_power": "Meter power (positive = export)",
+          "meter_power_a": "Meter power phase A",
+          "meter_power_b": "Meter power phase B",
+          "meter_power_c": "Meter power phase C",
+          "meter_voltage_a": "Voltage phase A",
+          "meter_voltage_b": "Voltage phase B",
+          "meter_voltage_c": "Voltage phase C",
+          "invert_meter": "Invert meter sign",
+          "ev_power": "Wallbox charging power",
+          "ev_current_l1": "Wallbox current L1",
+          "ev_current_l2": "Wallbox current L2",
+          "ev_current_l3": "Wallbox current L3",
+          "wb_status": "Wallbox status",
+          "cable": "Cable connected",
+          "wb_enable": "Wallbox charging enable switch",
+          "wb_current": "Wallbox max charging current",
+          "car_limit": "Car charge current limit",
+          "car_charging": "Car charging switch"
+        }
+      },
+      "powers": {
+        "title": "Agreed power, reserve and fuse",
+        "data": {
+          "block_1_power": "Block 1 agreed power",
+          "block_2_power": "Block 2 agreed power",
+          "block_3_power": "Block 3 agreed power",
+          "block_4_power": "Block 4 agreed power",
+          "block_5_power": "Block 5 agreed power",
+          "reserve_power": "Reserve",
+          "fuse_current": "Main fuse",
+          "fuse_margin": "Fuse margin",
+          "kw_per_amp": "Wallbox kW per A"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Input entities",
+        "data": {
+          "meter_power": "Meter power (positive = export)",
+          "meter_power_a": "Meter power phase A",
+          "meter_power_b": "Meter power phase B",
+          "meter_power_c": "Meter power phase C",
+          "meter_voltage_a": "Voltage phase A",
+          "meter_voltage_b": "Voltage phase B",
+          "meter_voltage_c": "Voltage phase C",
+          "invert_meter": "Invert meter sign",
+          "ev_power": "Wallbox charging power",
+          "ev_current_l1": "Wallbox current L1",
+          "ev_current_l2": "Wallbox current L2",
+          "ev_current_l3": "Wallbox current L3",
+          "wb_status": "Wallbox status",
+          "cable": "Cable connected",
+          "wb_enable": "Wallbox charging enable switch",
+          "wb_current": "Wallbox max charging current",
+          "car_limit": "Car charge current limit",
+          "car_charging": "Car charging switch"
+        }
+      },
+      "powers": {
+        "title": "Agreed power, reserve and fuse",
+        "data": {
+          "block_1_power": "Block 1 agreed power",
+          "block_2_power": "Block 2 agreed power",
+          "block_3_power": "Block 3 agreed power",
+          "block_4_power": "Block 4 agreed power",
+          "block_5_power": "Block 5 agreed power",
+          "reserve_power": "Reserve",
+          "fuse_current": "Main fuse",
+          "fuse_margin": "Fuse margin",
+          "kw_per_amp": "Wallbox kW per A"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "tariff_block": {"name": "Tariff block"},
+      "window_energy": {"name": "Window energy"},
+      "window_projection": {"name": "Window projection"},
+      "allowed_power": {"name": "Allowed power"},
+      "other_power": {"name": "Other power"},
+      "phase_headroom": {"name": "Phase headroom"},
+      "target_level": {"name": "Target level"},
+      "tier": {"name": "Tier"},
+      "decision_reason": {"name": "Decision reason"},
+      "last_car_command": {"name": "Last car command"}
+    }
+  }
 }
