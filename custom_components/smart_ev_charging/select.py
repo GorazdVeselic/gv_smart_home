@@ -16,7 +16,7 @@ class EvModeSelect(SmartEvEntity, SelectEntity, RestoreEntity):
     _attr_options = list(MODES)
 
     def __init__(self, coordinator, engine) -> None:
-        super().__init__(coordinator, "mode")
+        super().__init__(coordinator, "mode", "select")
         self._engine = engine
         self._attr_current_option = engine.mode
 

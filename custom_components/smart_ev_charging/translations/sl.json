@@ -88,148 +88,148 @@
   "entity": {
     "sensor": {
       "tariff_block": {
-        "name": "Tariff block"
+        "name": "Blok"
       },
       "window_energy": {
-        "name": "Window energy"
+        "name": "Energija okna"
       },
       "window_projection": {
-        "name": "Window projection"
+        "name": "Projekcija okna"
       },
       "window_load": {
-        "name": "Window load"
+        "name": "Obremenitev okna"
       },
       "allowed_power": {
-        "name": "Allowed power"
+        "name": "Dovoljena moč"
       },
       "other_power": {
-        "name": "Other power"
+        "name": "Poraba hiše"
       },
       "phase_headroom": {
-        "name": "Phase headroom"
+        "name": "Prostor na fazi"
       },
       "phase_current_a": {
-        "name": "Phase A current"
+        "name": "Tok faza A"
       },
       "phase_current_b": {
-        "name": "Phase B current"
+        "name": "Tok faza B"
       },
       "phase_current_c": {
-        "name": "Phase C current"
+        "name": "Tok faza C"
       },
       "target_level": {
-        "name": "Target level",
+        "name": "Stopnja",
         "state": {
-          "none": "none",
-          "off": "paused",
-          "car_6A": "car 6A (1.6 kW)",
-          "car_8A": "car 8A (2.0 kW)",
-          "wb_6A": "wallbox 6 A (4.1 kW)",
-          "wb_7A": "wallbox 7 A (4.8 kW)",
-          "wb_8A": "wallbox 8 A (5.5 kW)",
-          "wb_9A": "wallbox 9 A (6.2 kW)",
-          "wb_10A": "wallbox 10 A (6.9 kW)",
-          "wb_11A": "wallbox 11 A (7.6 kW)",
-          "wb_12A": "wallbox 12 A (8.3 kW)",
-          "wb_13A": "wallbox 13 A (9.0 kW)",
-          "wb_14A": "wallbox 14 A (9.7 kW)",
-          "wb_15A": "wallbox 15 A (10.3 kW)",
-          "wb_16A": "wallbox 16 A (11.0 kW)",
-          "wb_17A": "wallbox 17 A (11.7 kW)",
-          "wb_18A": "wallbox 18 A (12.4 kW)",
-          "wb_19A": "wallbox 19 A (13.1 kW)",
-          "wb_20A": "wallbox 20 A (13.8 kW)",
-          "wb_21A": "wallbox 21 A (14.5 kW)",
-          "wb_22A": "wallbox 22 A (15.2 kW)",
-          "wb_23A": "wallbox 23 A (15.9 kW)",
-          "wb_24A": "wallbox 24 A (16.6 kW)",
-          "wb_25A": "wallbox 25 A (17.2 kW)",
-          "wb_26A": "wallbox 26 A (17.9 kW)",
-          "wb_27A": "wallbox 27 A (18.6 kW)",
-          "wb_28A": "wallbox 28 A (19.3 kW)",
-          "wb_29A": "wallbox 29 A (20.0 kW)",
-          "wb_30A": "wallbox 30 A (20.7 kW)",
-          "wb_31A": "wallbox 31 A (21.4 kW)",
-          "wb_32A": "wallbox 32 A (22.1 kW)"
+          "none": "brez",
+          "off": "pavza",
+          "car_6A": "avto 6A (1,6 kW)",
+          "car_8A": "avto 8A (2,0 kW)",
+          "wb_6A": "wallbox 6 A (4,1 kW)",
+          "wb_7A": "wallbox 7 A (4,8 kW)",
+          "wb_8A": "wallbox 8 A (5,5 kW)",
+          "wb_9A": "wallbox 9 A (6,2 kW)",
+          "wb_10A": "wallbox 10 A (6,9 kW)",
+          "wb_11A": "wallbox 11 A (7,6 kW)",
+          "wb_12A": "wallbox 12 A (8,3 kW)",
+          "wb_13A": "wallbox 13 A (9,0 kW)",
+          "wb_14A": "wallbox 14 A (9,7 kW)",
+          "wb_15A": "wallbox 15 A (10,3 kW)",
+          "wb_16A": "wallbox 16 A (11,0 kW)",
+          "wb_17A": "wallbox 17 A (11,7 kW)",
+          "wb_18A": "wallbox 18 A (12,4 kW)",
+          "wb_19A": "wallbox 19 A (13,1 kW)",
+          "wb_20A": "wallbox 20 A (13,8 kW)",
+          "wb_21A": "wallbox 21 A (14,5 kW)",
+          "wb_22A": "wallbox 22 A (15,2 kW)",
+          "wb_23A": "wallbox 23 A (15,9 kW)",
+          "wb_24A": "wallbox 24 A (16,6 kW)",
+          "wb_25A": "wallbox 25 A (17,2 kW)",
+          "wb_26A": "wallbox 26 A (17,9 kW)",
+          "wb_27A": "wallbox 27 A (18,6 kW)",
+          "wb_28A": "wallbox 28 A (19,3 kW)",
+          "wb_29A": "wallbox 29 A (20,0 kW)",
+          "wb_30A": "wallbox 30 A (20,7 kW)",
+          "wb_31A": "wallbox 31 A (21,4 kW)",
+          "wb_32A": "wallbox 32 A (22,1 kW)"
         }
       },
       "tier": {
-        "name": "Tier",
+        "name": "Raven",
         "state": {
-          "idle": "Idle",
-          "paused": "Paused",
-          "low": "Low",
-          "high": "High"
+          "idle": "Miruje",
+          "paused": "Pavza",
+          "low": "Nizka",
+          "high": "Visoka"
         }
       },
       "decision_reason": {
-        "name": "Decision reason",
+        "name": "Razlog",
         "state": {
-          "starting": "Starting",
-          "idle_mode_off": "Mode off",
-          "idle_no_cable": "Cable not connected",
-          "idle_car_waiting": "Car not charging (target reached)",
-          "idle_paused_externally": "Paused manually",
-          "pause_window_projection": "Paused: window would exceed agreed power",
-          "pause_min_duration": "Pause lasts at least 10 min",
-          "resume_pending": "Paused: waiting 5 min of headroom",
-          "resume_from_pause": "Resumed from pause",
-          "lower_hard_threshold": "Lowered: hard threshold",
-          "lower_after_hysteresis": "Lowered: 1 min below threshold",
-          "lower_pending": "Wallbox at floor, waiting to lower",
-          "high_floor": "Wallbox at floor, no room for more",
-          "high_adjust": "Wallbox current adjusted",
-          "steady": "No change",
-          "raise_pending": "Waiting 10 min stability to raise",
-          "raise_to_high": "Raised to high tier",
-          "low_adjust": "Car limit adjusted",
-          "low_hold": "Car limit: waiting 10 min",
-          "low_reserve_absorbs": "Reserve absorbs the load, limit kept",
-          "meter_unavailable": "Meter unavailable, car at 6A",
-          "wallbox_unavailable": "Wallbox unavailable",
-          "other": "Other"
+          "starting": "Zagon",
+          "idle_mode_off": "Način izklopljen",
+          "idle_no_cable": "Kabel ni priklopljen",
+          "idle_car_waiting": "Avto ne polni (cilj dosežen)",
+          "idle_paused_externally": "Ročna pavza",
+          "pause_window_projection": "Pavza: okno bi preseglo dogovorjeno moč",
+          "pause_min_duration": "Pavza traja vsaj 10 min",
+          "resume_pending": "Pavza: čakam 5 min prostora za vrnitev",
+          "resume_from_pause": "Vrnitev iz pavze",
+          "lower_hard_threshold": "Spust: trdi prag",
+          "lower_after_hysteresis": "Spust: 1 min pod pragom",
+          "lower_pending": "Wallbox na dnu, čakam spust",
+          "high_floor": "Wallbox na dnu, premalo prostora za več",
+          "high_adjust": "Prilagojen tok wallboxa",
+          "steady": "Brez spremembe",
+          "raise_pending": "Čakam 10 min stabilnosti za dvig",
+          "raise_to_high": "Dvig v visoko raven",
+          "low_adjust": "Prilagojena meja avta",
+          "low_hold": "Meja avta: čakam 10 min",
+          "low_reserve_absorbs": "Rezerva pokrije porabo, meja ostane",
+          "meter_unavailable": "Števec nedosegljiv, avto na 6A",
+          "wallbox_unavailable": "Wallbox nedosegljiv",
+          "other": "Drugo"
         }
       },
       "last_car_command": {
-        "name": "Last car command"
+        "name": "Zadnji ukaz avtu"
       },
       "last_window": {
-        "name": "Last window"
+        "name": "Zadnje okno"
       }
     },
     "number": {
       "block_1_power": {
-        "name": "Block 1 power"
+        "name": "Blok 1 dogovorjena moč"
       },
       "block_2_power": {
-        "name": "Block 2 power"
+        "name": "Blok 2 dogovorjena moč"
       },
       "block_3_power": {
-        "name": "Block 3 power"
+        "name": "Blok 3 dogovorjena moč"
       },
       "block_4_power": {
-        "name": "Block 4 power"
+        "name": "Blok 4 dogovorjena moč"
       },
       "block_5_power": {
-        "name": "Block 5 power"
+        "name": "Blok 5 dogovorjena moč"
       },
       "reserve_power": {
-        "name": "Reserve power"
+        "name": "Rezerva"
       },
       "fuse_current": {
-        "name": "Fuse current"
+        "name": "Varovalka"
       },
       "fuse_margin": {
-        "name": "Fuse margin"
+        "name": "Rob varovalke"
       }
     },
     "select": {
       "mode": {
-        "name": "Mode",
+        "name": "Način",
         "state": {
-          "off": "Off",
-          "observe": "Observe",
-          "tariff": "Tariff"
+          "off": "Izklop",
+          "observe": "Opazuj",
+          "tariff": "Tarifa"
         }
       }
     }

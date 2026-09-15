@@ -12,7 +12,36 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import Snapshot
+from .core.levels import build_levels
 from .entity import SmartEvEntity
+
+LEVEL_OPTIONS = ("none",) + tuple(lv.name for lv in build_levels(wb_max_current=32))
+TIER_OPTIONS = ("idle", "paused", "low", "high")
+REASON_OPTIONS = (
+    "starting",
+    "idle_mode_off",
+    "idle_no_cable",
+    "idle_car_waiting",
+    "idle_paused_externally",
+    "pause_window_projection",
+    "pause_min_duration",
+    "resume_pending",
+    "resume_from_pause",
+    "lower_hard_threshold",
+    "lower_after_hysteresis",
+    "lower_pending",
+    "high_floor",
+    "high_adjust",
+    "steady",
+    "raise_pending",
+    "raise_to_high",
+    "low_adjust",
+    "low_hold",
+    "low_reserve_absorbs",
+    "meter_unavailable",
+    "wallbox_unavailable",
+    "other",
+)
 
 
 @dataclass(frozen=True)
@@ -24,6 +53,7 @@ class EvSensorDescription:
     device_class: SensorDeviceClass | None = None
     state_class: SensorStateClass | None = None
     precision: int | None = None
+    options: tuple[str, ...] | None = None
 
 
 def _round(v: float | None, n: int = 2) -> float | None:
@@ -90,22 +120,62 @@ SENSORS: tuple[EvSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         precision=1,
     ),
-    EvSensorDescription("target_level", lambda s: s.level or "none"),
-    EvSensorDescription("tier", lambda s: s.tier, lambda s: {"mode": s.mode, "wallbox_ok": s.wallbox_ok}),
-    EvSensorDescription("decision_reason", lambda s: s.reason, lambda s: s.decision_inputs),
+    EvSensorDescription(
+        "last_window",
+        lambda s: _round(s.last_window_avg_kw),
+        lambda s: {"exceeded": s.last_window_exceeded},
+        unit="kW",
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        precision=2,
+    ),
+    EvSensorDescription(
+        "window_load",
+        lambda s: _round(100.0 * s.window_projection_kw / s.agreed_kw, 0) if s.agreed_kw else None,
+        lambda s: {"target_pct": _round(100.0 * s.target_kw / s.agreed_kw, 0) if s.agreed_kw else None},
+        unit="%",
+        state_class=SensorStateClass.MEASUREMENT,
+        precision=0,
+    ),
+    EvSensorDescription("phase_current_a", lambda s: _round(s.i_phase_a[0], 1), unit="A", device_class=SensorDeviceClass.CURRENT, state_class=SensorStateClass.MEASUREMENT, precision=1),
+    EvSensorDescription("phase_current_b", lambda s: _round(s.i_phase_a[1], 1), unit="A", device_class=SensorDeviceClass.CURRENT, state_class=SensorStateClass.MEASUREMENT, precision=1),
+    EvSensorDescription("phase_current_c", lambda s: _round(s.i_phase_a[2], 1), unit="A", device_class=SensorDeviceClass.CURRENT, state_class=SensorStateClass.MEASUREMENT, precision=1),
+    EvSensorDescription(
+        "target_level",
+        lambda s: s.level or "none",
+        lambda s: {"p_ev_kw": _round(s.p_ev_kw)},
+        device_class=SensorDeviceClass.ENUM,
+        options=LEVEL_OPTIONS,
+    ),
+    EvSensorDescription(
+        "tier",
+        lambda s: s.tier,
+        lambda s: {"mode": s.mode, "wallbox_ok": s.wallbox_ok, "level": s.level},
+        device_class=SensorDeviceClass.ENUM,
+        options=TIER_OPTIONS,
+    ),
+    EvSensorDescription(
+        "decision_reason",
+        lambda s: s.reason if s.reason in REASON_OPTIONS else "other",
+        lambda s: s.decision_inputs,
+        device_class=SensorDeviceClass.ENUM,
+        options=REASON_OPTIONS,
+    ),
     EvSensorDescription("last_car_command", lambda s: s.last_car_command or "none", lambda s: s.last_car_command_attrs),
 )
 
 
 class EvSensor(SmartEvEntity, SensorEntity):
     def __init__(self, coordinator, desc: EvSensorDescription) -> None:
-        super().__init__(coordinator, desc.key)
+        super().__init__(coordinator, desc.key, "sensor")
         self._desc = desc
         self._attr_native_unit_of_measurement = desc.unit
         self._attr_device_class = desc.device_class
         self._attr_state_class = desc.state_class
         if desc.precision is not None:
             self._attr_suggested_display_precision = desc.precision
+        if desc.options is not None:
+            self._attr_options = list(desc.options)
 
     @property
     def native_value(self):

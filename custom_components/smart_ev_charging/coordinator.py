@@ -39,6 +39,7 @@ class Snapshot:
     last_window_exceeded: bool | None = None
     p_other_used_kw: float = 0.0
     i_house_a: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    i_phase_a: tuple[float, float, float] = (0.0, 0.0, 0.0)
     i_headroom_a: float = 0.0
     hard_threshold_count: int = 0
     # odločitev

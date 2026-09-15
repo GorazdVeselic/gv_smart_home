@@ -1,0 +1,231 @@
+# Plošča »Polnjenje« (spec 7a). Pogled z odseki: na telefonu en stolpec, na tablici tri.
+# Produkcija: lovelace -> dashboards -> mode yaml, filename dashboards/polnjenje.yaml.
+title: Polnjenje
+views:
+  - title: Polnjenje
+    path: polnjenje
+    icon: mdi:ev-station
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Stanje
+            heading_style: title
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.ev_tier
+                state: high
+            card:
+              type: tile
+              entity: sensor.ev_tier
+              name: Raven
+              color: green
+              state_content: [state, level]
+              grid_options: {columns: 6, rows: 1}
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.ev_tier
+                state: low
+            card:
+              type: tile
+              entity: sensor.ev_tier
+              name: Raven
+              color: blue
+              state_content: [state, level]
+              grid_options: {columns: 6, rows: 1}
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.ev_tier
+                state: paused
+            card:
+              type: tile
+              entity: sensor.ev_tier
+              name: Raven
+              color: orange
+              state_content: [state, level]
+              grid_options: {columns: 6, rows: 1}
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: sensor.ev_tier
+                state: idle
+            card:
+              type: tile
+              entity: sensor.ev_tier
+              name: Raven
+              color: grey
+              state_content: [state]
+              grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.wallbox_charging_power
+            name: Moč avta
+            color: teal
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_target_level
+            name: Stopnja
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_allowed_power
+            name: Dovoljeno avtu
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.lsjwh4092rn039325_soc
+            name: Baterija
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.wallbox_status
+            name: Wallbox
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: select.ev_mode
+            name: Način
+            hide_state: true
+            vertical: false
+            features:
+              - type: select-options
+            features_position: inline
+            grid_options: {columns: 12, rows: 1}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Okno
+            heading_style: title
+          - type: gauge
+            entity: sensor.ev_window_load
+            name: Obremenitev okna
+            min: 0
+            max: 120
+            needle: true
+            segments:
+              - from: 0
+                color: var(--success-color)
+              - from: 80
+                color: var(--warning-color)
+              - from: 100
+                color: var(--error-color)
+            grid_options: {columns: 6, rows: 3}
+          - type: tile
+            entity: sensor.ev_tariff_block
+            name: Blok
+            state_content: [state, agreed_kw, minutes_to_next]
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_window_projection
+            name: Projekcija
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_window_energy
+            name: Energija
+            state_content: [state, remaining_min]
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_allowed_power
+            name: Dovoljeno avtu
+            state_content: [state, candidate]
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_last_window
+            name: Zadnje okno
+            state_content: [state, exceeded]
+            grid_options: {columns: 6, rows: 1}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Hiša in varovalka
+            heading_style: title
+          - type: tile
+            entity: sensor.ev_other_power
+            name: Hiša brez avta
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.solaredge_i1_ac_power
+            name: Sonce
+            color: amber
+            grid_options: {columns: 6, rows: 1}
+          - type: tile
+            entity: sensor.ev_phase_headroom
+            name: Prostor na fazi
+            state_content: [state, house_a, house_b, house_c]
+            grid_options: {columns: 12, rows: 1}
+          - type: gauge
+            entity: sensor.ev_phase_current_a
+            name: Faza A
+            min: 0
+            max: 20
+            severity: {green: 0, yellow: 14, red: 17}
+            grid_options: {columns: 4, rows: 2}
+          - type: gauge
+            entity: sensor.ev_phase_current_b
+            name: Faza B
+            min: 0
+            max: 20
+            severity: {green: 0, yellow: 14, red: 17}
+            grid_options: {columns: 4, rows: 2}
+          - type: gauge
+            entity: sensor.ev_phase_current_c
+            name: Faza C
+            min: 0
+            max: 20
+            severity: {green: 0, yellow: 14, red: 17}
+            grid_options: {columns: 4, rows: 2}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Odločitev
+            heading_style: title
+          - type: entities
+            entities:
+              - entity: sensor.ev_decision_reason
+                name: Razlog
+              - entity: sensor.ev_last_car_command
+                name: Zadnji ukaz avtu
+              - entity: binary_sensor.wallbox_cable_connected
+                name: Kabel
+          - type: logbook
+            entities:
+              - sensor.ev_decision_reason
+              - sensor.ev_tier
+            hours_to_show: 24
+
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading: Zadnje 3 ure
+            heading_style: title
+          - type: history-graph
+            hours_to_show: 3
+            entities:
+              - entity: sensor.ev_window_projection
+                name: Projekcija okna
+              - entity: sensor.ev_allowed_power
+                name: Dovoljeno avtu
+              - entity: sensor.ev_other_power
+                name: Hiša
+              - entity: sensor.wallbox_charging_power
+                name: Avto
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Nastavitve
+            heading_style: title
+          - type: entities
+            entities:
+              - number.ev_reserve_power
+              - number.ev_block_1_power
+              - number.ev_block_2_power
+              - number.ev_block_3_power
+              - number.ev_block_4_power
+              - number.ev_block_5_power
+              - number.ev_fuse_current
+              - number.ev_fuse_margin

@@ -1,0 +1,67 @@
+{
+  "entity": {
+    "sensor": {
+      "tier": {
+        "default": "mdi:ev-station",
+        "state": {
+          "idle": "mdi:sleep",
+          "paused": "mdi:pause-circle",
+          "low": "mdi:speedometer-slow",
+          "high": "mdi:speedometer"
+        }
+      },
+      "target_level": {
+        "default": "mdi:stairs"
+      },
+      "decision_reason": {
+        "default": "mdi:head-question"
+      },
+      "tariff_block": {
+        "default": "mdi:calendar-clock"
+      },
+      "window_energy": {
+        "default": "mdi:timer-sand"
+      },
+      "window_projection": {
+        "default": "mdi:chart-timeline-variant"
+      },
+      "window_load": {
+        "default": "mdi:gauge"
+      },
+      "allowed_power": {
+        "default": "mdi:car-electric"
+      },
+      "other_power": {
+        "default": "mdi:home-lightning-bolt"
+      },
+      "phase_headroom": {
+        "default": "mdi:fuse"
+      },
+      "phase_current_a": {
+        "default": "mdi:alpha-a-circle"
+      },
+      "phase_current_b": {
+        "default": "mdi:alpha-b-circle"
+      },
+      "phase_current_c": {
+        "default": "mdi:alpha-c-circle"
+      },
+      "last_car_command": {
+        "default": "mdi:cloud-upload"
+      },
+      "last_window": {
+        "default": "mdi:history"
+      }
+    },
+    "select": {
+      "mode": {
+        "default": "mdi:tune",
+        "state": {
+          "off": "mdi:power-off",
+          "observe": "mdi:eye",
+          "tariff": "mdi:cash-clock"
+        }
+      }
+    }
+  }
+}

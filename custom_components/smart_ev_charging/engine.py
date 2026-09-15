@@ -91,6 +91,7 @@ class Engine:
         self._started = now
         self._last_cable: bool | None = None
         self._hard_count = 0
+        self._i_phase_a: tuple[float, float, float] = (0.0, 0.0, 0.0)
         self._unsubs: list = []
         # opozorila (spec 7a): vsako se sproži enkrat na dogodek, ne na vsak vzorec
         self._phase_over_since: datetime.datetime | None = None
@@ -261,6 +262,7 @@ class Engine:
         self._last_meter = now
         self._meter_alarm_sent = False
         phases = self._phases()
+        self._i_phase_a = phase_currents_a(phases)
         hard = self.controller.on_meter(now, p_grid, phases, self._p_ev_kw(), self._i_ev_a())
         if hard:
             self._hard_count += 1
@@ -413,6 +415,7 @@ class Engine:
             last_window_exceeded=ctl.window.last_window.exceeded if ctl.window.last_window else None,
             p_other_used_kw=ctl.p_other_used_kw,
             i_house_a=ctl.i_house_used_a,
+            i_phase_a=self._i_phase_a,
             i_headroom_a=ctl.i_headroom_a,
             hard_threshold_count=self._hard_count,
             p_allow_kw=d.p_allow_kw if d else None,

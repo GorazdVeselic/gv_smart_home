@@ -51,7 +51,7 @@ class EvNumber(SmartEvEntity, RestoreNumber):
     _attr_mode = NumberMode.BOX
 
     def __init__(self, coordinator, engine, desc: EvNumberDescription) -> None:
-        super().__init__(coordinator, desc.key)
+        super().__init__(coordinator, desc.key, "number")
         self._engine = engine
         self._desc = desc
         self._attr_native_unit_of_measurement = desc.unit
