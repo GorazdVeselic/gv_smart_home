@@ -56,9 +56,13 @@ def patch_phone(cfg: dict, k: dict) -> None:
     cards[i + 1:i + 1] = k["tok_moci"] + k["telefon"]
 
 
+def is_car(card: dict) -> bool:
+    return "mg4_preheat_button" in card.get("custom_fields", {})
+
+
 def put_tablet_button(stack: dict, k: dict) -> None:
     """Gumb Polnjenje kot polje v kartici z avtom, nad gumbom Predgretje."""
-    car = next(c for c in stack["cards"] if "mg4_preheat_button" in c.get("custom_fields", {}))
+    car = next(c for c in stack["cards"] if is_car(c))
     car["custom_fields"]["ev_charging_button"] = k["tablica_gumb"]
     car["styles"]["custom_fields"]["ev_charging_button"] = k["tablica_gumb_polozaj"]
 
@@ -68,9 +72,7 @@ def patch_tablet(cfg: dict, k: dict, detail: dict) -> None:
 
     def find_stack(c):
         if isinstance(c, dict):
-            if c.get("type") == "vertical-stack" and any(
-                "mg4_preheat_button" in x.get("custom_fields", {}) for x in c.get("cards", [])
-            ):
+            if c.get("type") == "vertical-stack" and any(is_car(x) for x in c.get("cards", [])):
                 return c
             for key in ("cards", "card"):
                 if key in c:
@@ -87,7 +89,8 @@ def patch_tablet(cfg: dict, k: dict, detail: dict) -> None:
     stack = find_stack(home["cards"])
     if stack is None:
         raise SystemExit("tablica: vertical-stack s kartico avta ni najden")
-    stack["cards"] = [c for c in stack["cards"] if not ours(c)]
+    # kartica z avtom po prvem prenosu že nosi naše polje, zato je ne odstranimo
+    stack["cards"] = [c for c in stack["cards"] if is_car(c) or not ours(c)]
     put_tablet_button(stack, k)
     cfg["views"] = [v for v in cfg["views"] if v.get("path") != detail["path"]] + [detail]
 

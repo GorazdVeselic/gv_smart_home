@@ -26,12 +26,14 @@ cards:
             icon_color: >-
               {% set t = states('sensor.ev_tier') %}
               {{ {'high': 'green', 'low': 'blue', 'paused': 'orange'}.get(t, 'grey') }}
+            tap_action: {action: more-info}
           - type: custom:mushroom-template-card
             entity: sensor.ev_decision_reason
             primary: "{{ state_translated('sensor.ev_decision_reason') }}"
             secondary: "Dovoljeno avtu {{ states('sensor.ev_allowed_power') }} kW"
             icon: mdi:head-question
             icon_color: blue
+            tap_action: {action: more-info}
           - type: custom:mushroom-template-card
             entity: select.ev_mode
             primary: "Način: {{ state_translated('select.ev_mode') }}"
