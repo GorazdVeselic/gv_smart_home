@@ -56,6 +56,13 @@ def patch_phone(cfg: dict, k: dict) -> None:
     cards[i + 1:i + 1] = k["tok_moci"] + k["telefon"]
 
 
+def put_tablet_button(stack: dict, k: dict) -> None:
+    """Gumb Polnjenje kot polje v kartici z avtom, nad gumbom Predgretje."""
+    car = next(c for c in stack["cards"] if "mg4_preheat_button" in c.get("custom_fields", {}))
+    car["custom_fields"]["ev_charging_button"] = k["tablica_gumb"]
+    car["styles"]["custom_fields"]["ev_charging_button"] = k["tablica_gumb_polozaj"]
+
+
 def patch_tablet(cfg: dict, k: dict, detail: dict) -> None:
     home = cfg["views"][0]
 
@@ -80,7 +87,8 @@ def patch_tablet(cfg: dict, k: dict, detail: dict) -> None:
     stack = find_stack(home["cards"])
     if stack is None:
         raise SystemExit("tablica: vertical-stack s kartico avta ni najden")
-    stack["cards"] = [c for c in stack["cards"] if not ours(c)] + k["tablica_gumb"]
+    stack["cards"] = [c for c in stack["cards"] if not ours(c)]
+    put_tablet_button(stack, k)
     cfg["views"] = [v for v in cfg["views"] if v.get("path") != detail["path"]] + [detail]
 
 

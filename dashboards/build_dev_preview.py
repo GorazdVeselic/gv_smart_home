@@ -25,8 +25,11 @@ def main() -> None:
     phone = {"title": "Avto (predogled)", "path": "avto", "icon": "mdi:car-electric", "type": "sections", "max_columns": 1,
              "sections": [{"type": "grid", "cards": car + k["tok_moci"] + k["telefon"] + [entities]}]}
     car_tablet = json.loads(CAR_TABLET.read_text()) if CAR_TABLET.exists() else {"type": "markdown", "content": "kartica z avtom"}
-    # tablica: pod kartico z avtom vrstica treh Mushroom ploščic, kot je v tvojem vertical-stacku
-    car_tablet = dict(car_tablet, cards=car_tablet.get("cards", []) + k["tablica_gumb"])
+    # tablica: gumb Polnjenje kot polje v kartici z avtom, nad gumbom Predgretje
+    for c in car_tablet.get("cards", []):
+        if "mg4_preheat_button" in c.get("custom_fields", {}):
+            c["custom_fields"]["ev_charging_button"] = k["tablica_gumb"]
+            c["styles"]["custom_fields"]["ev_charging_button"] = k["tablica_gumb_polozaj"]
     tablet = {"title": "Tablica (predogled)", "path": "tablica", "icon": "mdi:tablet", "type": "panel",
               "cards": [{"type": "custom:stack-in-card", "cards": [car_tablet]}]}
     tablet_detail = yaml.safe_load((ROOT / "dashboards" / "tablica_polnjenje.yaml").read_text())
