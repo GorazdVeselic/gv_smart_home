@@ -1,7 +1,7 @@
 {
   "domain": "smart_ev_charging",
   "name": "Smart EV Charging",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "documentation": "https://github.com/GorazdVeselic/gv_smart_home",
   "requirements": [],
   "dependencies": [],
